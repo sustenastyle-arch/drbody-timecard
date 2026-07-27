@@ -75,6 +75,7 @@ const STATUS_LABELS = {
 };
 const STAFF_NAME_STYLES = {
   'Hiromi Tsunakawa': { bg: '#fb923c', fg: '#111827' },
+  'Yuki Tanaka': { bg: '#dc2626', fg: '#ffffff' },
   'Megumi Tezeni': { bg: '#a855f7', fg: '#ffffff' },
   'Betsy Maire': { bg: '#facc15', fg: '#111827' },
   'Aya Chong': { bg: '#92400e', fg: '#ffffff' },
