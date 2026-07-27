@@ -11,6 +11,10 @@ const filterTo = document.getElementById('filterTo');
 const applyFilterButton = document.getElementById('applyFilter');
 const resetFilterButton = document.getElementById('resetFilter');
 const pinConfigContainer = document.getElementById('pinConfig');
+const showStaffView = document.getElementById('showStaffView');
+const showAdminView = document.getElementById('showAdminView');
+const staffSection = document.getElementById('staffSection');
+const adminSection = document.getElementById('adminSection');
 const PIN_STORAGE_KEY = 'drbody_timecard_pins';
 const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
@@ -24,8 +28,8 @@ const DEFAULT_EMPLOYEES = [
 ];
 const ACTIONS = ['Time In', 'Time Out'];
 const STATUS_LABELS = {
-  'Time In': 'Working',
-  'Time Out': 'Off Duty'
+  'Time In': '出勤中',
+  'Time Out': '退勤済み'
 };
 
 function loadLocalEntries() {
@@ -139,7 +143,7 @@ function formatTime(iso) {
 }
 
 function getCurrentState(entry) {
-  if (!entry) return 'Not clocked';
+  if (!entry) return '未打刻';
   return STATUS_LABELS[entry.action] || entry.action;
 }
 
@@ -183,10 +187,16 @@ function renderGrid(entries) {
       return `<button data-employee="${name}" data-action="${action}" ${disabled ? 'disabled' : ''}>${action}</button>`;
     }).join('');
 
+    const stateHint = entry
+      ? (entry.action === 'Time In'
+          ? '現在出勤中です。次の打刻はタイムアウトです。'
+          : '現在退勤中です。次の打刻はタイムインです。')
+      : 'まだ出勤していません。タイムインを押してください。';
     return `
       <div class="card">
         <h3>${name}</h3>
-        <p>Status: <strong class="status-text ${statusClass}">${statusText}</strong></p>
+        <p>状態: <strong class="status-text ${statusClass}">${statusText}</strong></p>
+        <p class="state-hint">${stateHint}</p>
         ${!employeePin ? '<p class="pin-warning">初回打刻時に4桁の暗証番号が登録されます。</p>' : ''}
         <div class="button-row">
           ${buttons}
@@ -403,6 +413,22 @@ resetFilterButton.addEventListener('click', () => {
 });
 
 addEmployeeButton.addEventListener('click', addEmployee);
+showStaffView.addEventListener('click', () => setView('staff'));
+showAdminView.addEventListener('click', () => setView('admin'));
+
+function setView(view) {
+  if (view === 'staff') {
+    staffSection.classList.remove('hidden');
+    adminSection.classList.add('hidden');
+    showStaffView.classList.add('active');
+    showAdminView.classList.remove('active');
+  } else {
+    staffSection.classList.add('hidden');
+    adminSection.classList.remove('hidden');
+    showStaffView.classList.remove('active');
+    showAdminView.classList.add('active');
+  }
+}
 
 function renderEmployeeManagement() {
   const employees = loadEmployees();
@@ -461,3 +487,4 @@ renderGrid(entries);
 renderHistory(entries);
 renderPinConfig();
 renderEmployeeManagement();
+setView('staff');
