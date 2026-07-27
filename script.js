@@ -500,6 +500,13 @@ function toLocalDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+function toDateLabel(dateKey) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${month}月${day}日(${weekdayNames[date.getDay()]})`;
+}
+
 function toHoursDecimal(ms) {
   return Math.round((ms / 3600000) * 100) / 100;
 }
@@ -567,6 +574,7 @@ function buildSummary(entries, fromValue, toValue) {
       employee: name,
       daysWorked: workedDates.size,
       workedDates: Array.from(workedDates).sort(),
+      workedDateLabels: Array.from(workedDates).sort().map(toDateLabel),
       sunHours: toHoursDecimal(weekdayMs[0]),
       monHours: toHoursDecimal(weekdayMs[1]),
       tueHours: toHoursDecimal(weekdayMs[2]),
@@ -586,7 +594,7 @@ function downloadSummaryCsv(entries, fromValue, toValue) {
   const rows = summary.map(item => ({
     employee: item.employee,
     days_worked: item.daysWorked,
-    worked_dates: item.workedDates.join(' | '),
+    worked_dates: item.workedDateLabels.join(' | '),
     sunday_hours: item.sunHours,
     monday_hours: item.monHours,
     tuesday_hours: item.tueHours,
@@ -610,8 +618,8 @@ function downloadSummaryCsv(entries, fromValue, toValue) {
   }
 
   // Fallback: export CSV if XLSX library is unavailable.
-  const header = ['employee', 'days_worked', 'total_hours_decimal', 'total_duration'];
-  const csvRows = summary.map(item => [item.employee, item.daysWorked, item.totalHoursDecimal, item.totalText].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const header = ['employee', 'days_worked', 'worked_dates', 'total_hours_decimal', 'total_duration'];
+  const csvRows = summary.map(item => [item.employee, item.daysWorked, item.workedDateLabels.join(' | '), item.totalHoursDecimal, item.totalText].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
   const csv = [header.join(','), ...csvRows].join('\n');
   const csvWithBom = `\uFEFF${csv}`;
   const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
