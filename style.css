@@ -10,8 +10,14 @@ input[type='text'] { width: 100%; padding: 10px; border: 1px solid #ccc; border-
 button { cursor: pointer; border: none; border-radius: 8px; padding: 10px 14px; background: #2563eb; color: #fff; font-weight: 600; }
 button[disabled] { opacity: 0.45; cursor: not-allowed; }
 button.secondary { background: #64748b; }
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px; }
+.filter-row { display: flex; flex-direction: column; gap: 6px; }
+button.secondary { background: #64748b; }
 .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+#historyTable { width: 100%; border-collapse: collapse; margin-top: 12px; }
+#historyTable th, #historyTable td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
+#historyTable thead { background: #e2e8f0; }
 .status-text.working { color: #0f766e; }
 .status-text.on-break { color: #c2410c; }
 .status-text.off-duty { color: #475569; }

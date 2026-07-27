@@ -24,13 +24,38 @@
 
   <section class="grid" id="employeeGrid"></section>
 
+  <section class="filters">
+    <div class="filter-row">
+      <label>開始日</label>
+      <input id="filterFrom" type="date" />
+    </div>
+    <div class="filter-row">
+      <label>終了日</label>
+      <input id="filterTo" type="date" />
+    </div>
+    <div class="filter-row">
+      <label>期間</label>
+      <select id="periodFilter">
+        <option value="all">全日付</option>
+        <option value="1-15">1日〜15日のみ</option>
+        <option value="16-end">16日〜月末のみ</option>
+      </select>
+    </div>
+    <div class="filter-row action-row">
+      <button id="applyFilter" class="secondary">フィルタ適用</button>
+      <button id="resetFilter" class="secondary">リセット</button>
+    </div>
+  </section>
+
   <section class="action-row">
-    <button id="loadBackend">Load backend history</button>
-    <button id="downloadCsv">Download CSV</button>
+    <button id="loadBackend">バックエンド履歴を読み込む</button>
+    <button id="downloadCsv">CSVをダウンロード</button>
+    <button id="saveBackendAll" class="secondary">全件バックエンド保存</button>
   </section>
 
   <section>
     <h2>History</h2>
+    <table id="historyTable"></table>
     <pre id="historyOutput"></pre>
   </section>
 
