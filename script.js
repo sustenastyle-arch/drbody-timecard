@@ -379,7 +379,7 @@ function closeEditEntryModal() {
   editEntryModal.setAttribute('aria-hidden', 'true');
 }
 
-function saveEditEntryFromModal() {
+async function saveEditEntryFromModal() {
   if (editingEntryIndex === null || editingEntryIndex < 0) {
     closeEditEntryModal();
     return;
@@ -408,7 +408,8 @@ function saveEditEntryFromModal() {
   saveLocalEntries(entries);
   renderGrid(entries);
   renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
-  messageEl.textContent = 'Entry updated locally.';
+  messageEl.textContent = 'Entry updated locally. Syncing backend...';
+  await saveAllToBackend(entries);
   closeEditEntryModal();
 }
 
@@ -422,7 +423,7 @@ function editEntry(entries, index) {
   openEditEntryModal(entry, index);
 }
 
-function deleteEntry(entries, index) {
+async function deleteEntry(entries, index) {
   if (!verifyAdminPassword()) {
     messageEl.textContent = 'Admin password required to delete entry.';
     return;
@@ -432,7 +433,8 @@ function deleteEntry(entries, index) {
   saveLocalEntries(entries);
   renderGrid(entries);
   renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
-  messageEl.textContent = 'Entry deleted locally.';
+  messageEl.textContent = 'Entry deleted locally. Syncing backend...';
+  await saveAllToBackend(entries);
 }
 
 async function saveAllToBackend(entries) {
