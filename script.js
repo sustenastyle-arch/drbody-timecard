@@ -10,12 +10,10 @@ const EMPLOYEES = [
   'Hiromi Tsunakawa', 'Yuki Tanaka', 'Yuka Nishi', 'Megumi Tezeni',
   'Mami Yamamoto', 'Betsy Maire', 'Aya Chong', 'Mai Marquez'
 ];
-const ACTIONS = ['Clock In', 'Break Start', 'Break End', 'Clock Out'];
+const ACTIONS = ['Time In', 'Time Out'];
 const STATUS_LABELS = {
-  'Clock In': 'Working',
-  'Clock Out': 'Off Duty',
-  'Break Start': 'On Break',
-  'Break End': 'Working'
+  'Time In': 'Working',
+  'Time Out': 'Off Duty'
 };
 
 function loadLocalEntries() {
@@ -52,26 +50,22 @@ function getCurrentState(entry) {
 
 function getStatusClass(entry) {
   if (!entry) return 'not-clocked';
-  if (entry.action === 'Clock In' || entry.action === 'Break End') return 'working';
-  if (entry.action === 'Break Start') return 'on-break';
-  if (entry.action === 'Clock Out') return 'off-duty';
+  if (entry.action === 'Time In') return 'working';
+  if (entry.action === 'Time Out') return 'off-duty';
   return 'not-clocked';
 }
 
 function isActionEnabled(latestAction, action) {
   if (!latestAction) {
-    return action === 'Clock In';
+    return action === 'Time In';
   }
-  if (latestAction === 'Clock In' || latestAction === 'Break End') {
-    return action === 'Break Start' || action === 'Clock Out';
+  if (latestAction === 'Time In') {
+    return action === 'Time Out';
   }
-  if (latestAction === 'Break Start') {
-    return action === 'Break End' || action === 'Clock Out';
+  if (latestAction === 'Time Out') {
+    return action === 'Time In';
   }
-  if (latestAction === 'Clock Out') {
-    return action === 'Clock In';
-  }
-  return action === 'Clock In';
+  return action === 'Time In';
 }
 
 function renderGrid(entries) {
