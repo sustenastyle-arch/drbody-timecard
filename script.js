@@ -443,15 +443,13 @@ async function saveAllToBackend(entries) {
   }
   try {
     messageEl.textContent = 'Saving all entries to backend...';
-    for (const entry of entries) {
-      const res = await fetch(`${apiRoot}/save-timecard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entry })
-      });
-      if (!res.ok) {
-        throw new Error(`Save error: ${res.status}`);
-      }
+    const res = await fetch(`${apiRoot}/save-timecard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'replace', entries })
+    });
+    if (!res.ok) {
+      throw new Error(`Save error: ${res.status}`);
     }
     messageEl.textContent = 'All entries saved to backend.';
   } catch (error) {

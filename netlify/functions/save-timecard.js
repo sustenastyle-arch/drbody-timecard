@@ -74,15 +74,6 @@ exports.handler = async function (event) {
     };
   }
 
-  const entry = payload.entry;
-  if (!entry || !entry.employee || !entry.action || !entry.timestamp) {
-    return {
-      statusCode: 400,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Missing entry data' })
-    };
-  }
-
   try {
     const file = await fetchFile();
     let entries = [];
@@ -93,6 +84,34 @@ exports.handler = async function (event) {
       entries = JSON.parse(decoded);
       if (!Array.isArray(entries)) entries = [];
     }
+
+    if (payload.mode === 'replace') {
+      const incoming = Array.isArray(payload.entries) ? payload.entries : null;
+      if (!incoming) {
+        return {
+          statusCode: 400,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({ error: 'Missing entries array for replace mode' })
+        };
+      }
+      const validEntries = incoming.filter(entry => entry && entry.employee && entry.action && entry.timestamp);
+      await updateFile(validEntries, sha);
+      return {
+        statusCode: 200,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ success: true, mode: 'replace', count: validEntries.length })
+      };
+    }
+
+    const entry = payload.entry;
+    if (!entry || !entry.employee || !entry.action || !entry.timestamp) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'Missing entry data' })
+      };
+    }
+
     entries.push(entry);
     await updateFile(entries, sha);
     return {

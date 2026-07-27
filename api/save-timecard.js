@@ -70,13 +70,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  const entry = payload.entry;
-  if (!entry || !entry.employee || !entry.action || !entry.timestamp) {
-    res.writeHead(400, CORS_HEADERS);
-    res.end(JSON.stringify({ error: 'Missing entry data' }));
-    return;
-  }
-
   try {
     const file = await fetchFile();
     let entries = [];
@@ -87,6 +80,28 @@ export default async function handler(req, res) {
       entries = JSON.parse(decoded);
       if (!Array.isArray(entries)) entries = [];
     }
+
+    if (payload.mode === 'replace') {
+      const incoming = Array.isArray(payload.entries) ? payload.entries : null;
+      if (!incoming) {
+        res.writeHead(400, CORS_HEADERS);
+        res.end(JSON.stringify({ error: 'Missing entries array for replace mode' }));
+        return;
+      }
+      const validEntries = incoming.filter(entry => entry && entry.employee && entry.action && entry.timestamp);
+      await updateFile(validEntries, sha);
+      res.writeHead(200, CORS_HEADERS);
+      res.end(JSON.stringify({ success: true, mode: 'replace', count: validEntries.length }));
+      return;
+    }
+
+    const entry = payload.entry;
+    if (!entry || !entry.employee || !entry.action || !entry.timestamp) {
+      res.writeHead(400, CORS_HEADERS);
+      res.end(JSON.stringify({ error: 'Missing entry data' }));
+      return;
+    }
+
     entries.push(entry);
     await updateFile(entries, sha);
     res.writeHead(200, CORS_HEADERS);
