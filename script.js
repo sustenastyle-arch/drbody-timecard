@@ -503,8 +503,8 @@ function toLocalDateKey(date) {
 function toDateLabel(dateKey) {
   const [year, month, day] = dateKey.split('-').map(Number);
   const date = new Date(year, month - 1, day);
-  const weekdayNames = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
-  return `${weekdayNames[date.getDay()]} ${month}月${day}日`;
+  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${month}/${day}(${weekdayNames[date.getDay()]})`;
 }
 
 function toHoursDecimal(ms) {
@@ -594,7 +594,7 @@ function downloadSummaryCsv(entries, fromValue, toValue) {
   const rows = summary.map(item => ({
     employee: item.employee,
     days_worked: item.daysWorked,
-    worked_dates: item.workedDateLabels.join(' | '),
+    worked_dates: item.workedDateLabels.join(', '),
     sunday_hours: item.sunHours,
     monday_hours: item.monHours,
     tuesday_hours: item.tueHours,
@@ -619,7 +619,7 @@ function downloadSummaryCsv(entries, fromValue, toValue) {
 
   // Fallback: export CSV if XLSX library is unavailable.
   const header = ['employee', 'days_worked', 'worked_dates', 'total_hours_decimal', 'total_duration'];
-  const csvRows = summary.map(item => [item.employee, item.daysWorked, item.workedDateLabels.join(' | '), item.totalHoursDecimal, item.totalText].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const csvRows = summary.map(item => [item.employee, item.daysWorked, item.workedDateLabels.join(', '), item.totalHoursDecimal, item.totalText].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
   const csv = [header.join(','), ...csvRows].join('\n');
   const csvWithBom = `\uFEFF${csv}`;
   const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
