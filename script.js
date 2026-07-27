@@ -8,7 +8,6 @@ const downloadCsvButton = document.getElementById('downloadCsv');
 const saveBackendAllButton = document.getElementById('saveBackendAll');
 const filterFrom = document.getElementById('filterFrom');
 const filterTo = document.getElementById('filterTo');
-const periodFilter = document.getElementById('periodFilter');
 const applyFilterButton = document.getElementById('applyFilter');
 const resetFilterButton = document.getElementById('resetFilter');
 
@@ -121,12 +120,6 @@ function renderGrid(entries) {
   });
 }
 
-function getPeriodKey(timestamp) {
-  const d = new Date(timestamp);
-  const day = d.getDate();
-  return day >= 1 && day <= 15 ? '1-15' : '16-end';
-}
-
 function applyFilters(entries) {
   return entries.filter(entry => {
     const ts = new Date(entry.timestamp);
@@ -140,8 +133,6 @@ function applyFilters(entries) {
       toDate.setHours(23,59,59,999);
       if (ts > toDate) return false;
     }
-    const periodKey = getPeriodKey(entry.timestamp);
-    if (periodFilter.value !== 'all' && periodFilter.value !== periodKey) return false;
     return true;
   });
 }
@@ -155,7 +146,7 @@ function renderHistory(entries) {
   } else {
     historyTable.innerHTML = `
       <thead>
-        <tr><th>Timestamp</th><th>Employee</th><th>Action</th><th>Period</th><th>Edit</th><th>Delete</th></tr>
+        <tr><th>Timestamp</th><th>Employee</th><th>Action</th><th>Edit</th><th>Delete</th></tr>
       </thead>
       <tbody>
         ${rows.map(item => {
@@ -163,7 +154,6 @@ function renderHistory(entries) {
             <td>${formatTime(item.entry.timestamp)}</td>
             <td>${item.entry.employee}</td>
             <td>${item.entry.action}</td>
-            <td>${getPeriodKey(item.entry.timestamp)}</td>
             <td><button data-index="${item.index}" class="edit-btn">Edit</button></td>
             <td><button data-index="${item.index}" class="delete-btn">Delete</button></td>
           </tr>`;
@@ -312,7 +302,6 @@ applyFilterButton.addEventListener('click', () => renderHistory(loadLocalEntries
 resetFilterButton.addEventListener('click', () => {
   filterFrom.value = '';
   filterTo.value = '';
-  periodFilter.value = 'all';
   renderHistory(loadLocalEntries());
 });
 
