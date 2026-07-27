@@ -92,7 +92,7 @@ button.secondary { background: #64748b; }
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  align-items: center;
+  align-items: flex-end;
   margin-top: 20px;
 }
 .date-range {
@@ -100,6 +100,7 @@ button.secondary { background: #64748b; }
   gap: 14px;
   flex-wrap: wrap;
   min-width: 320px;
+  align-items: flex-end;
 }
 .date-range-item {
   display: flex;
@@ -108,11 +109,11 @@ button.secondary { background: #64748b; }
   min-width: 140px;
 }
 .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
-.admin-actions {
-  margin-left: auto;
+.export-inline {
+  min-width: 230px;
 }
-.admin-actions #downloadCsv {
-  min-width: 220px;
+.export-inline button {
+  min-height: 46px;
 }
 .sync-tools {
   width: 100%;
