@@ -42,6 +42,24 @@ async function updateFile(content, sha) {
   return res.json();
 }
 
+function entryKey(entry) {
+  if (!entry) return '';
+  if (entry.id) return `id:${entry.id}`;
+  return `legacy:${entry.employee || ''}|${entry.action || ''}|${entry.timestamp || ''}`;
+}
+
+function dedupeEntries(entries) {
+  const seen = new Set();
+  const unique = [];
+  entries.forEach(entry => {
+    const key = entryKey(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    unique.push(entry);
+  });
+  return unique;
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: CORS_HEADERS, body: '' };
@@ -94,7 +112,7 @@ exports.handler = async function (event) {
           body: JSON.stringify({ error: 'Missing entries array for replace mode' })
         };
       }
-      const validEntries = incoming.filter(entry => entry && entry.employee && entry.action && entry.timestamp);
+      const validEntries = dedupeEntries(incoming.filter(entry => entry && entry.employee && entry.action && entry.timestamp));
       await updateFile(validEntries, sha);
       return {
         statusCode: 200,
@@ -112,8 +130,12 @@ exports.handler = async function (event) {
       };
     }
 
-    entries.push(entry);
-    await updateFile(entries, sha);
+    const exists = entries.some(item => entryKey(item) === entryKey(entry));
+    if (!exists) {
+      entries.push(entry);
+    }
+    const uniqueEntries = dedupeEntries(entries);
+    await updateFile(uniqueEntries, sha);
     return {
       statusCode: 200,
       headers: CORS_HEADERS,

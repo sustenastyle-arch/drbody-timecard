@@ -42,6 +42,24 @@ async function updateFile(content, sha) {
   return res.json();
 }
 
+function entryKey(entry) {
+  if (!entry) return '';
+  if (entry.id) return `id:${entry.id}`;
+  return `legacy:${entry.employee || ''}|${entry.action || ''}|${entry.timestamp || ''}`;
+}
+
+function dedupeEntries(entries) {
+  const seen = new Set();
+  const unique = [];
+  entries.forEach(entry => {
+    const key = entryKey(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    unique.push(entry);
+  });
+  return unique;
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, CORS_HEADERS);
@@ -88,7 +106,7 @@ export default async function handler(req, res) {
         res.end(JSON.stringify({ error: 'Missing entries array for replace mode' }));
         return;
       }
-      const validEntries = incoming.filter(entry => entry && entry.employee && entry.action && entry.timestamp);
+      const validEntries = dedupeEntries(incoming.filter(entry => entry && entry.employee && entry.action && entry.timestamp));
       await updateFile(validEntries, sha);
       res.writeHead(200, CORS_HEADERS);
       res.end(JSON.stringify({ success: true, mode: 'replace', count: validEntries.length }));
@@ -102,8 +120,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    entries.push(entry);
-    await updateFile(entries, sha);
+    const exists = entries.some(item => entryKey(item) === entryKey(entry));
+    if (!exists) {
+      entries.push(entry);
+    }
+    const uniqueEntries = dedupeEntries(entries);
+    await updateFile(uniqueEntries, sha);
     res.writeHead(200, CORS_HEADERS);
     res.end(JSON.stringify({ success: true, entry }));
   } catch (error) {

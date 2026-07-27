@@ -45,6 +45,7 @@ const ADMIN_PASSWORD_KEY = 'drbody_timecard_admin_password';
 let isAdminAuthenticated = false;
 const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
+const PENDING_ENTRIES_KEY = 'drbody_timecard_pending_entries';
 const employeeList = document.getElementById('employeeList');
 const newEmployeeName = document.getElementById('newEmployeeName');
 const addEmployeeButton = document.getElementById('addEmployeeButton');
@@ -103,6 +104,38 @@ function loadLocalEntries() {
 
 function saveLocalEntries(entries) {
   localStorage.setItem(LOCAL_ENTRIES_KEY, JSON.stringify(entries));
+}
+
+function entryKey(entry) {
+  if (!entry) return '';
+  if (entry.id) return `id:${entry.id}`;
+  return `legacy:${entry.employee || ''}|${entry.action || ''}|${entry.timestamp || ''}`;
+}
+
+function loadPendingEntries() {
+  try {
+    const json = localStorage.getItem(PENDING_ENTRIES_KEY);
+    return json ? JSON.parse(json) : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+function savePendingEntries(entries) {
+  localStorage.setItem(PENDING_ENTRIES_KEY, JSON.stringify(entries));
+}
+
+function mergeUniqueEntries(primary, secondary) {
+  const merged = [];
+  const seen = new Set();
+  [...primary, ...secondary].forEach(entry => {
+    const key = entryKey(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    merged.push(entry);
+  });
+  return merged.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 }
 
 function loadAdminPassword() {
@@ -197,10 +230,68 @@ function toggleStaffManagement() {
 
 function createEntry(employee, action) {
   return {
+    id: (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     employee,
     action: normalizeAction(action),
     timestamp: new Date().toISOString()
   };
+}
+
+function queuePendingEntry(entry) {
+  const pending = loadPendingEntries();
+  const key = entryKey(entry);
+  if (!pending.some(item => entryKey(item) === key)) {
+    pending.push(entry);
+    savePendingEntries(pending);
+  }
+}
+
+function removePendingEntry(entry) {
+  const key = entryKey(entry);
+  const pending = loadPendingEntries().filter(item => entryKey(item) !== key);
+  savePendingEntries(pending);
+}
+
+async function postEntryToBackend(apiRoot, entry) {
+  const res = await fetch(`${apiRoot}/save-timecard`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entry })
+  });
+  if (!res.ok) {
+    throw new Error(`Save error: ${res.status}`);
+  }
+  return res.json();
+}
+
+async function flushPendingEntries(options = {}) {
+  const silent = !!options.silent;
+  const apiRoot = getApiRoot();
+  if (!apiRoot) return;
+
+  const pending = loadPendingEntries();
+  if (!pending.length) return;
+
+  let sentCount = 0;
+  for (const entry of pending) {
+    try {
+      await postEntryToBackend(apiRoot, entry);
+      removePendingEntry(entry);
+      sentCount += 1;
+    } catch (error) {
+      console.error(error);
+      if (!silent) {
+        messageEl.textContent = 'Some pending entries could not be synced yet. They will retry automatically.';
+      }
+      return;
+    }
+  }
+
+  if (!silent && sentCount > 0) {
+    messageEl.textContent = `Synced ${sentCount} pending entries.`;
+  }
 }
 
 function formatTime(iso) {
@@ -696,20 +787,14 @@ async function sendToBackend(entry) {
   }
   try {
     messageEl.textContent = 'Sending to backend...';
-    const res = await fetch(`${apiRoot}/save-timecard`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entry })
-    });
-    if (!res.ok) {
-      throw new Error(`Save error: ${res.status}`);
-    }
-    const result = await res.json();
+    const result = await postEntryToBackend(apiRoot, entry);
+    removePendingEntry(entry);
     messageEl.textContent = 'Saved to backend.';
     return result;
   } catch (error) {
     console.error(error);
-    messageEl.textContent = 'Backend save failed. Check the console.';
+    queuePendingEntry(entry);
+    messageEl.textContent = 'Saved locally. Backend sync will retry automatically.';
   }
 }
 
@@ -731,10 +816,13 @@ async function loadBackendEntries(options = {}) {
       throw new Error(`Load error: ${res.status}`);
     }
     const result = await res.json();
-    const entries = Array.isArray(result) ? result : result.entries || [];
-    saveLocalEntries(entries);
-    renderGrid(entries);
-    renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
+    const backendEntries = Array.isArray(result) ? result : result.entries || [];
+    const pendingEntries = loadPendingEntries();
+    const mergedEntries = mergeUniqueEntries(backendEntries, pendingEntries);
+    saveLocalEntries(mergedEntries);
+    renderGrid(mergedEntries);
+    renderHistory(mergedEntries, currentView === 'admin' && isAdminAuthenticated);
+    await flushPendingEntries({ silent: true });
     if (!silent) {
       messageEl.textContent = 'Loaded backend history.';
     }
@@ -857,3 +945,7 @@ setView('staff');
 if (isBackendAvailable()) {
   loadBackendEntries({ silent: true });
 }
+
+window.addEventListener('online', () => {
+  flushPendingEntries({ silent: true });
+});
