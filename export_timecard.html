@@ -31,6 +31,11 @@
     <label>打刻タイプカラム（IN/OUTなど、なければ空欄可）</label>
     <select id="typeCols"></select>
   </div>
+  <div style="margin-top:8px">
+    <label>Export date range (optional)</label>
+    <input id="rangeFrom" type="date" /> ～ <input id="rangeTo" type="date" />
+    <div class="minor">Leave empty to export all available dates.</div>
+  </div>
   <div style="margin-top:10px">
     <button id="process">変換してダウンロード</button>
   </div>
@@ -43,6 +48,8 @@
     const dateCols = document.getElementById('dateCols');
     const nameCols = document.getElementById('nameCols');
     const typeCols = document.getElementById('typeCols');
+    const rangeFrom = document.getElementById('rangeFrom');
+    const rangeTo = document.getElementById('rangeTo');
     const log = document.getElementById('log');
 
     let parsedData = null;
@@ -116,9 +123,12 @@
       const chosenDate = dateCols.value || detectColumn(headers, ['timestamp','datetime','date_time','date','time','punch']);
       const chosenName = nameCols.value || detectColumn(headers, ['employee','name','staff','worker']);
       const chosenType = typeCols.value || detectColumn(headers, ['type','action','status','punch']);
+      const fromValue = rangeFrom.value ? new Date(rangeFrom.value) : null;
+      const toValue = rangeTo.value ? new Date(rangeTo.value) : null;
 
       if(!chosenName){ appendLog('従業員名カラムが見つかりません。列を手動で選択してください。'); return; }
       if(!chosenDate){ appendLog('日時カラムが見つかりません。列を手動で選択してください。'); return; }
+      if(fromValue && toValue && fromValue > toValue){ appendLog('開始日は終了日より前にしてください。'); return; }
 
       // build per-employee records with parsed datetimes
       const groups = {};
@@ -126,6 +136,8 @@
         const name = r[chosenName] ? String(r[chosenName]).trim() : 'Unknown';
         const dt = parseDateTime(r, chosenDate);
         if(!dt) return; // skip
+        if(fromValue && dt < fromValue) return;
+        if(toValue){ const endDate = new Date(toValue); endDate.setHours(23,59,59,999); if(dt > endDate) return; }
         const type = chosenType ? (r[chosenType]||'') : '';
         if(!groups[name]) groups[name]=[];
         groups[name].push({raw:r, dt:dt, type: String(type).toLowerCase()});
@@ -134,18 +146,24 @@
       const wb = XLSX.utils.book_new();
       const summaryRows = [];
       const allDetailRows = [];
+      const dailyTotalsRows = [];
 
       Object.keys(groups).forEach(name=>{
         const recs = groups[name].sort((a,b)=>a.dt - b.dt);
         // group by date
         const daily = {};
         recs.forEach(r=>{
-          const dKey = r.dt.getFullYear() + '-' + (r.dt.getMonth()+1) + '-' + r.dt.getDate();
+          const year = r.dt.getFullYear();
+          const month = String(r.dt.getMonth() + 1).padStart(2,'0');
+          const day = String(r.dt.getDate()).padStart(2,'0');
+          const dKey = `${year}-${month}-${day}`;
           if(!daily[dKey]) daily[dKey]=[];
           daily[dKey].push(r);
         });
         const weeklyTotals = {}; // weekStartISO -> ms
         const periodTotals = { '1-15':0, '16-end':0 };
+        let totalMs = 0;
+        let daysWorked = 0;
 
         Object.keys(daily).sort().forEach(dateKey=>{
           const events = daily[dateKey].sort((a,b)=>a.dt-b.dt);
@@ -165,6 +183,8 @@
 
           let dayMs = 0;
           pairs.forEach(p=>{ const d = p.out.dt - p.in.dt; if(d>0) dayMs += d; });
+          if(dayMs > 0) daysWorked += 1;
+          totalMs += dayMs;
 
           const dateObj = new Date(dateKey);
           const wkStart = new Date(dateObj);
@@ -172,12 +192,22 @@
           const wkKey = wkStart.toISOString().slice(0,10);
           weeklyTotals[wkKey] = (weeklyTotals[wkKey]||0) + dayMs;
 
-          const dayNum = (new Date(dateKey)).getDate();
-          if(dayNum>=1 && dayNum<=15) periodTotals['1-15'] += dayMs; else periodTotals['16-end'] += dayMs;
+          const dayNum = dateObj.getDate();
+          const periodKey = dayNum>=1 && dayNum<=15 ? '1-15' : '16-end';
+          periodTotals[periodKey] += dayMs;
 
-          if(pairs.length===0){ allDetailRows.push({Employee:name, Date:dateKey, In:'', Out:'', Duration:'0:00', WeekStart:wkKey, Period: dayNum<=15 ? '1-15' : '16-end'}); }
+          dailyTotalsRows.push({
+            Employee: name,
+            Date: dateKey,
+            'Hours Worked': toHoursDecimal(dayMs),
+            'Hours Worked (hh:mm)': toHhMm(dayMs),
+            Period: periodKey,
+            WeekStart: wkKey
+          });
+
+          if(pairs.length===0){ allDetailRows.push({Employee:name, Date:dateKey, In:'', Out:'', Duration:'0:00', WeekStart:wkKey, Period: periodKey}); }
           pairs.forEach(p=>{
-            allDetailRows.push({ Employee: name, Date: dateKey, In: p.in.dt.toLocaleString(), Out: p.out.dt.toLocaleString(), Duration: toHhMm(p.out.dt - p.in.dt), WeekStart: wkKey, Period: dayNum<=15 ? '1-15' : '16-end' });
+            allDetailRows.push({ Employee: name, Date: dateKey, In: p.in.dt.toLocaleString(), Out: p.out.dt.toLocaleString(), Duration: toHhMm(p.out.dt - p.in.dt), WeekStart: wkKey, Period: periodKey });
           });
         });
 
@@ -191,14 +221,15 @@
         // keep per-employee summary sheets optional: append them
         XLSX.utils.book_append_sheet(wb, ws2, sname);
 
-        summaryRows.push({Employee:name, '1-15(hrs)': toHoursDecimal(periodTotals['1-15']), '16-end(hrs)': toHoursDecimal(periodTotals['16-end'])});
+        summaryRows.push({Employee:name, 'Days Worked': daysWorked, 'Total Hours': toHoursDecimal(totalMs), '1-15(hrs)': toHoursDecimal(periodTotals['1-15']), '16-end(hrs)': toHoursDecimal(periodTotals['16-end'])});
       });
 
-      // single sheet with all detail rows
       const wsAll = XLSX.utils.json_to_sheet(allDetailRows);
       XLSX.utils.book_append_sheet(wb, wsAll, 'DETAILS');
 
-      // overall summary
+      const wsDaily = XLSX.utils.json_to_sheet(dailyTotalsRows);
+      XLSX.utils.book_append_sheet(wb, wsDaily, 'DAILY TOTALS');
+
       const wsSum = XLSX.utils.json_to_sheet(summaryRows);
       XLSX.utils.book_append_sheet(wb, wsSum, 'SUMMARY');
 
