@@ -36,6 +36,15 @@
     <input id="rangeFrom" type="date" /> ～ <input id="rangeTo" type="date" />
     <div class="minor">Leave empty to export all available dates.</div>
   </div>
+  <div style="margin-top:8px">
+    <label>期間フィルタ</label>
+    <select id="periodSelect">
+      <option value="all">全日付</option>
+      <option value="1-15">1日〜15日のみ</option>
+      <option value="16-end">16日〜月末のみ</option>
+    </select>
+    <div class="minor">1〜15日と16日〜月末を選んでエクスポートできます。</div>
+  </div>
   <div style="margin-top:10px">
     <button id="process">変換してダウンロード</button>
   </div>
@@ -50,6 +59,7 @@
     const typeCols = document.getElementById('typeCols');
     const rangeFrom = document.getElementById('rangeFrom');
     const rangeTo = document.getElementById('rangeTo');
+    const periodSelect = document.getElementById('periodSelect');
     const log = document.getElementById('log');
 
     let parsedData = null;
@@ -125,6 +135,7 @@
       const chosenType = typeCols.value || detectColumn(headers, ['type','action','status','punch']);
       const fromValue = rangeFrom.value ? new Date(rangeFrom.value) : null;
       const toValue = rangeTo.value ? new Date(rangeTo.value) : null;
+      const selectedPeriod = periodSelect.value;
 
       if(!chosenName){ appendLog('従業員名カラムが見つかりません。列を手動で選択してください。'); return; }
       if(!chosenDate){ appendLog('日時カラムが見つかりません。列を手動で選択してください。'); return; }
@@ -186,7 +197,7 @@
           if(dayMs > 0) daysWorked += 1;
           totalMs += dayMs;
 
-          const dateObj = new Date(dateKey);
+            const dateObj = new Date(dateKey);
           const wkStart = new Date(dateObj);
           wkStart.setDate(dateObj.getDate() - dateObj.getDay());
           const wkKey = wkStart.toISOString().slice(0,10);
@@ -195,6 +206,10 @@
           const dayNum = dateObj.getDate();
           const periodKey = dayNum>=1 && dayNum<=15 ? '1-15' : '16-end';
           periodTotals[periodKey] += dayMs;
+
+          if(selectedPeriod !== 'all' && selectedPeriod !== periodKey) {
+            return;
+          }
 
           dailyTotalsRows.push({
             Employee: name,
