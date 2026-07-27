@@ -42,6 +42,7 @@ const adminLoginButton = document.getElementById('adminLoginButton');
 const adminLogoutButton = document.getElementById('adminLogoutButton');
 const adminLoginHint = document.getElementById('adminLoginHint');
 const ADMIN_PASSWORD_KEY = 'drbody_timecard_admin_password';
+const FIXED_ADMIN_PASSWORD = 'drbodytimes2019';
 let isAdminAuthenticated = false;
 const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
@@ -139,11 +140,17 @@ function mergeUniqueEntries(primary, secondary) {
 }
 
 function loadAdminPassword() {
-  return localStorage.getItem(ADMIN_PASSWORD_KEY) || '';
+  return localStorage.getItem(ADMIN_PASSWORD_KEY) || FIXED_ADMIN_PASSWORD;
 }
 
 function saveAdminPassword(password) {
   localStorage.setItem(ADMIN_PASSWORD_KEY, password);
+}
+
+function enforceAdminPassword() {
+  if (localStorage.getItem(ADMIN_PASSWORD_KEY) !== FIXED_ADMIN_PASSWORD) {
+    saveAdminPassword(FIXED_ADMIN_PASSWORD);
+  }
 }
 
 function verifyAdminPassword() {
@@ -193,17 +200,7 @@ function updateAdminLoginState() {
 }
 
 function handleAdminLogin() {
-  const stored = loadAdminPassword();
   const input = adminPasswordInput.value.trim();
-  if (!stored) {
-    if (!input) {
-      alert('Set the admin password before signing in.');
-      return;
-    }
-    saveAdminPassword(input);
-    messageEl.textContent = 'Admin password saved.';
-  }
-
   if (input === loadAdminPassword()) {
     isAdminAuthenticated = true;
     updateAdminLoginState();
@@ -858,6 +855,14 @@ if (resetFilterButton) {
 addEmployeeButton.addEventListener('click', addEmployee);
 adminLoginButton.addEventListener('click', handleAdminLogin);
 adminLogoutButton.addEventListener('click', handleAdminLogout);
+if (adminPasswordInput) {
+  adminPasswordInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleAdminLogin();
+    }
+  });
+}
 showStaffView.addEventListener('click', () => setView('staff'));
 showAdminView.addEventListener('click', () => setView('admin'));
 if (saveEditEntryButton) {
@@ -935,6 +940,7 @@ if (DEFAULT_API_ROOT && !API_INPUT.value.trim()) {
   API_INPUT.value = DEFAULT_API_ROOT;
 }
 const entries = loadLocalEntries();
+enforceAdminPassword();
 renderGrid(entries);
 updateAdminLoginState();
 renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
