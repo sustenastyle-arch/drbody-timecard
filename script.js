@@ -711,14 +711,19 @@ async function sendToBackend(entry) {
   }
 }
 
-async function loadBackendEntries() {
+async function loadBackendEntries(options = {}) {
+  const silent = !!options.silent;
   const apiRoot = getApiRoot();
   if (!apiRoot) {
-    messageEl.textContent = 'No backend available. This works only on a deployed site with API support.';
+    if (!silent) {
+      messageEl.textContent = 'No backend available. This works only on a deployed site with API support.';
+    }
     return;
   }
   try {
-    messageEl.textContent = 'Loading backend history...';
+    if (!silent) {
+      messageEl.textContent = 'Loading backend history...';
+    }
     const res = await fetch(`${apiRoot}/get-timecard`);
     if (!res.ok) {
       throw new Error(`Load error: ${res.status}`);
@@ -728,10 +733,14 @@ async function loadBackendEntries() {
     saveLocalEntries(entries);
     renderGrid(entries);
     renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
-    messageEl.textContent = 'Loaded backend history.';
+    if (!silent) {
+      messageEl.textContent = 'Loaded backend history.';
+    }
   } catch (error) {
     console.error(error);
-    messageEl.textContent = 'Failed to load backend history.';
+    if (!silent) {
+      messageEl.textContent = 'Failed to load backend history.';
+    }
   }
 }
 
@@ -842,3 +851,7 @@ renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
 renderEmployeeManagement();
 messageEl.textContent = '';
 setView('staff');
+
+if (isBackendAvailable()) {
+  loadBackendEntries({ silent: true });
+}
