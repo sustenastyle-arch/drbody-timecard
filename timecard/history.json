@@ -23,5 +23,10 @@
     "employee": "Mami Yamamoto",
     "action": "Time Out",
     "timestamp": "2026-07-27T04:24:28.838Z"
+  },
+  {
+    "employee": "Yuka Nishi",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T01:57:58.634Z"
   }
 ]
