@@ -9,18 +9,12 @@
 <body>
   <header>
     <h1>Time Clock</h1>
-    <p>Persistent timecard with Netlify Functions backend.</p>
+    <p>Simple in/out timecard.</p>
     <div class="view-tabs">
-      <button id="showStaffView" class="active">スタッフ画面</button>
-      <button id="showAdminView">管理画面</button>
+      <button id="showStaffView" class="active">Staff View</button>
+      <button id="showAdminView">Admin View</button>
     </div>
   </header>
-
-  <section class="config">
-    <label>Netlify function URL (e.g. https://your-site.netlify.app/.netlify/functions)</label>
-    <input id="apiRoot" type="text" value="https://YOUR_NETLIFY_SITE.netlify.app/.netlify/functions" />
-    <small>Set this URL to enable backend storage.</small>
-  </section>
 
   <section id="staffSection">
     <section class="status">
@@ -28,52 +22,104 @@
     </section>
 
     <section class="grid" id="employeeGrid"></section>
-
-    <section class="filters">
-      <div class="filter-row">
-        <label>開始日</label>
-        <input id="filterFrom" type="date" />
-      </div>
-      <div class="filter-row">
-        <label>終了日</label>
-        <input id="filterTo" type="date" />
-      </div>
-      <div class="filter-row action-row">
-        <button id="applyFilter" class="secondary">フィルタ適用</button>
-        <button id="resetFilter" class="secondary">リセット</button>
-      </div>
-    </section>
-
-    <section class="action-row">
-      <button id="loadBackend">バックエンド履歴を読み込む</button>
-      <button id="downloadCsv">CSVをダウンロード</button>
-      <button id="saveBackendAll" class="secondary">全件バックエンド保存</button>
-    </section>
-
-    <section>
-      <h2>History</h2>
-      <table id="historyTable"></table>
-      <pre id="historyOutput"></pre>
-    </section>
   </section>
 
   <section id="adminSection" class="hidden">
-    <section class="employee-management">
-      <h2>スタッフ管理</h2>
-      <div class="manage-row">
-        <input id="newEmployeeName" type="text" placeholder="新しいスタッフ名を入力" />
-        <button id="addEmployeeButton">追加</button>
+    <section class="admin-login" id="adminLoginSection">
+      <div class="admin-login-card">
+        <h2>Admin Login</h2>
+        <p class="admin-login-message">Enter the admin password to manage history and staff.</p>
+        <div class="admin-login-row">
+          <input id="adminPasswordInput" type="password" placeholder="Admin password" />
+          <button id="adminLoginButton">Sign In</button>
+          <button id="adminLogoutButton" class="secondary hidden">Sign Out</button>
+        </div>
+        <p id="adminLoginHint" class="state-hint"></p>
       </div>
-      <div id="employeeList"></div>
     </section>
 
-    <section class="pin-config">
-      <h2>暗証番号設定</h2>
-      <p>各スタッフの初回打刻時に4桁の暗証番号が登録されます。次回以降は同じ番号で認証してください。</p>
-      <div id="pinConfig"></div>
+    <section class="config">
+      <label>Backend API URL (optional)</label>
+      <input id="apiRoot" type="text" placeholder="https://your-site.vercel.app/api" value="" />
+      <small>Leave blank for local use.</small>
+    </section>
+
+    <section id="adminPanel" class="hidden">
+      <section>
+        <h2>History</h2>
+        <section class="filters">
+          <div class="filter-row">
+            <label for="filterFrom">Filter From</label>
+            <input id="filterFrom" type="date" />
+          </div>
+          <div class="filter-row">
+            <label for="filterTo">Filter To</label>
+            <input id="filterTo" type="date" />
+          </div>
+          <div class="action-row">
+            <button id="applyFilter" class="secondary">Apply Filter</button>
+            <button id="resetFilter" class="secondary">Reset</button>
+          </div>
+        </section>
+        <table id="historyTable"></table>
+        <pre id="historyOutput"></pre>
+      </section>
+
+      <section class="date-range-actions">
+        <section class="date-range">
+          <div class="date-range-item">
+            <label for="exportFrom">Start Date</label>
+            <input id="exportFrom" type="date" />
+          </div>
+          <div class="date-range-item">
+            <label for="exportTo">End Date</label>
+            <input id="exportTo" type="date" />
+          </div>
+        </section>
+        <section class="action-row admin-actions">
+          <button id="loadBackend">Load Backend History</button>
+          <button id="downloadCsv">Export summary Excel</button>
+          <button id="saveBackendAll" class="secondary">Save All</button>
+        </section>
+      </section>
+
+      <section class="action-row staff-toggle-row">
+        <button id="toggleStaffManagement" class="secondary">Show Staff Management</button>
+      </section>
+
+      <section id="staffManagementSection" class="employee-management staff-management-bottom hidden">
+        <h2>Staff Management</h2>
+        <div class="manage-row">
+          <input id="newEmployeeName" type="text" placeholder="Enter staff name" />
+          <button id="addEmployeeButton">Add</button>
+        </div>
+        <div id="employeeList"></div>
+      </section>
     </section>
   </section>
 
+  <section id="editEntryModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <h2>Edit Entry</h2>
+      <div class="modal-grid">
+        <label for="editEmployeeInput">Staff</label>
+        <input id="editEmployeeInput" type="text" />
+        <label for="editActionSelect">Action</label>
+        <select id="editActionSelect">
+          <option value="Clock In">Clock In</option>
+          <option value="Clock Out">Clock Out</option>
+        </select>
+        <label for="editTimestampInput">Date &amp; Time</label>
+        <input id="editTimestampInput" type="datetime-local" />
+      </div>
+      <section class="action-row modal-actions">
+        <button id="saveEditEntryButton">Save</button>
+        <button id="cancelEditEntryButton" class="secondary">Cancel</button>
+      </section>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
