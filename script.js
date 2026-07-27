@@ -12,9 +12,13 @@ const applyFilterButton = document.getElementById('applyFilter');
 const resetFilterButton = document.getElementById('resetFilter');
 const pinConfigContainer = document.getElementById('pinConfig');
 const PIN_STORAGE_KEY = 'drbody_timecard_pins';
-
+const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
-const EMPLOYEES = [
+const employeeList = document.getElementById('employeeList');
+const newEmployeeName = document.getElementById('newEmployeeName');
+const addEmployeeButton = document.getElementById('addEmployeeButton');
+
+const DEFAULT_EMPLOYEES = [
   'Hiromi Tsunakawa', 'Yuki Tanaka', 'Yuka Nishi', 'Megumi Tezeni',
   'Mami Yamamoto', 'Betsy Maire', 'Aya Chong', 'Mai Marquez'
 ];
@@ -52,6 +56,20 @@ function savePins(pins) {
   localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(pins));
 }
 
+function loadEmployees() {
+  try {
+    const json = localStorage.getItem(EMPLOYEES_KEY);
+    return json ? JSON.parse(json) : DEFAULT_EMPLOYEES.slice();
+  } catch (error) {
+    console.error(error);
+    return DEFAULT_EMPLOYEES.slice();
+  }
+}
+
+function saveEmployees(employees) {
+  localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(employees));
+}
+
 function verifyPin(employee) {
   const pins = loadPins();
   const expected = pins[employee];
@@ -74,7 +92,8 @@ function verifyPin(employee) {
 
 function renderPinConfig() {
   const pins = loadPins();
-  pinConfigContainer.innerHTML = EMPLOYEES.map(name => {
+  const employees = loadEmployees();
+  pinConfigContainer.innerHTML = employees.map(name => {
     const exists = !!pins[name];
     return `
       <div class="pin-row">
@@ -145,13 +164,14 @@ function isActionEnabled(latestAction, action) {
 }
 
 function renderGrid(entries) {
+  const employees = loadEmployees();
   const latestByEmployee = {};
   const pins = loadPins();
   entries.forEach(entry => {
     latestByEmployee[entry.employee] = entry;
   });
 
-  employeeGrid.innerHTML = EMPLOYEES.map(name => {
+  employeeGrid.innerHTML = employees.map(name => {
     const entry = latestByEmployee[name];
     const currentState = getCurrentState(entry);
     const timeLabel = entry ? ` @ ${formatTime(entry.timestamp)}` : '';
@@ -382,7 +402,62 @@ resetFilterButton.addEventListener('click', () => {
   renderHistory(loadLocalEntries());
 });
 
+addEmployeeButton.addEventListener('click', addEmployee);
+
+function renderEmployeeManagement() {
+  const employees = loadEmployees();
+  if (!employees.length) {
+    employeeList.innerHTML = '<p>スタッフが登録されていません。</p>';
+    return;
+  }
+  employeeList.innerHTML = employees.map(name => `
+    <div class="employee-item">
+      <span>${name}</span>
+      <button class="remove-employee-btn" data-employee="${name}">削除</button>
+    </div>
+  `).join('');
+
+  employeeList.querySelectorAll('.remove-employee-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeEmployee(btn.dataset.employee));
+  });
+}
+
+function addEmployee() {
+  const name = newEmployeeName.value.trim();
+  if (!name) {
+    alert('スタッフ名を入力してください。');
+    return;
+  }
+  const employees = loadEmployees();
+  if (employees.includes(name)) {
+    alert('このスタッフは既に登録されています。');
+    return;
+  }
+  employees.push(name);
+  saveEmployees(employees);
+  newEmployeeName.value = '';
+  renderGrid(loadLocalEntries());
+  renderPinConfig();
+  renderEmployeeManagement();
+  messageEl.textContent = `${name} をスタッフに追加しました。`;
+}
+
+function removeEmployee(name) {
+  if (!confirm(`${name} をスタッフ一覧から削除しますか？`)) return;
+  const employees = loadEmployees().filter(item => item !== name);
+  saveEmployees(employees);
+  const pins = loadPins();
+  delete pins[name];
+  savePins(pins);
+  renderGrid(loadLocalEntries());
+  renderHistory(loadLocalEntries());
+  renderPinConfig();
+  renderEmployeeManagement();
+  messageEl.textContent = `${name} をスタッフから削除しました。`;
+}
+
 const entries = loadLocalEntries();
 renderGrid(entries);
 renderHistory(entries);
-  renderPinConfig();
+renderPinConfig();
+renderEmployeeManagement();
