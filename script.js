@@ -55,10 +55,21 @@ function savePins(pins) {
 function verifyPin(employee) {
   const pins = loadPins();
   const expected = pins[employee];
-  if (!expected) return false;
   const input = prompt(`${employee} の4桁の暗証番号を入力してください`);
   if (input === null) return false;
-  return String(input).trim() === String(expected);
+  const pin = String(input).trim();
+  if (!/^[0-9]{4}$/.test(pin)) {
+    alert('4桁の数字を入力してください。');
+    return false;
+  }
+  if (!expected) {
+    pins[employee] = pin;
+    savePins(pins);
+    messageEl.textContent = `${employee} の暗証番号を登録しました。`;
+    renderPinConfig();
+    return true;
+  }
+  return pin === String(expected);
 }
 
 function renderPinConfig() {
@@ -146,10 +157,9 @@ function renderGrid(entries) {
     const timeLabel = entry ? ` @ ${formatTime(entry.timestamp)}` : '';
     const statusText = entry ? `${currentState}${timeLabel}` : currentState;
     const employeePin = pins[name];
-    const pinMissing = !employeePin;
     const statusClass = getStatusClass(entry);
     const buttons = ACTIONS.map(action => {
-      const disabled = !isActionEnabled(entry ? entry.action : null, action) || pinMissing;
+      const disabled = !isActionEnabled(entry ? entry.action : null, action);
       return `<button data-employee="${name}" data-action="${action}" ${disabled ? 'disabled' : ''}>${action}</button>`;
     }).join('');
 
@@ -157,7 +167,7 @@ function renderGrid(entries) {
       <div class="card">
         <h3>${name}</h3>
         <p>Status: <strong class="status-text ${statusClass}">${statusText}</strong></p>
-        ${pinMissing ? '<p class="pin-warning">PIN未設定です。下の設定から4桁を登録してください。</p>' : ''}
+        ${!employeePin ? '<p class="pin-warning">初回打刻時に4桁の暗証番号が登録されます。</p>' : ''}
         <div class="button-row">
           ${buttons}
         </div>
