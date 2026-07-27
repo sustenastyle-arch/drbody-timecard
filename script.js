@@ -303,7 +303,7 @@ async function loadBackendEntries() {
 
 loadBackendButton.addEventListener('click', loadBackendEntries);
 downloadCsvButton.addEventListener('click', () => {
-  downloadCsv(loadLocalEntries());
+  downloadCsv(applyFilters(loadLocalEntries()));
 });
 saveBackendAllButton.addEventListener('click', () => {
   saveAllToBackend(loadLocalEntries());
