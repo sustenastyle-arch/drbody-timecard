@@ -70,7 +70,13 @@ input[type='text'], input[type='date'], select { width: 100%; padding: 14px 12px
 }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 20px; }
 .card { background: #fff; border: 1px solid #dee2e6; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(15,23,42,.08); }
-.card h3 { margin: 0 0 8px; font-size: 18px; }
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #0f172a;
+}
 .card p { margin: 4px 0; }
 button { cursor: pointer; border: none; border-radius: 10px; padding: 12px 18px; background: #2563eb; color: #fff; font-weight: 600; font-size: 15px; }
 button[disabled] { opacity: 0.45; cursor: not-allowed; }
