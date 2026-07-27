@@ -518,6 +518,13 @@ function toHourMinuteText(ms) {
   return `${hours}h ${minutes}m`;
 }
 
+function toHourMinuteClock(ms) {
+  const totalMinutes = Math.round(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}:${String(minutes).padStart(2, '0')}`;
+}
+
 function addDurationByDay(start, end, weekdayMs, workedDates, dailyMsByDate) {
   let cursor = new Date(start);
   while (cursor < end) {
@@ -613,13 +620,12 @@ function buildSummary(entries, fromValue, toValue) {
     }
 
     const totalMilliseconds = weekdayMs.reduce((sum, ms) => sum + ms, 0);
-    const dailyHourLabels = rangeDateKeys.map(dateKey => `${toDateLabel(dateKey)} ${toHourMinuteText(dailyMsByDate[dateKey] || 0)}`);
     summary.push({
       employee: name,
       daysWorked: workedDates.size,
       workedDates: Array.from(workedDates).sort(),
       workedDateLabels: Array.from(workedDates).sort().map(toDateLabel),
-      dailyHourLabels,
+      dailyMsByDate,
       sunHours: toHoursDecimal(weekdayMs[0]),
       monHours: toHoursDecimal(weekdayMs[1]),
       tueHours: toHoursDecimal(weekdayMs[2]),
@@ -627,29 +633,25 @@ function buildSummary(entries, fromValue, toValue) {
       thuHours: toHoursDecimal(weekdayMs[4]),
       friHours: toHoursDecimal(weekdayMs[5]),
       satHours: toHoursDecimal(weekdayMs[6]),
+      totalMilliseconds,
       totalHoursDecimal: toHoursDecimal(totalMilliseconds),
       totalText: toHourMinuteText(totalMilliseconds)
     });
   });
-  return summary;
+  return { summary, rangeDateKeys };
 }
 
 function downloadSummaryCsv(entries, fromValue, toValue) {
-  const summary = buildSummary(entries, fromValue, toValue);
-  const rows = summary.map(item => ({
-    employee: item.employee,
-    days_worked: item.daysWorked,
-    worked_dates: item.dailyHourLabels.join(', '),
-    sunday_hours: item.sunHours,
-    monday_hours: item.monHours,
-    tuesday_hours: item.tueHours,
-    wednesday_hours: item.wedHours,
-    thursday_hours: item.thuHours,
-    friday_hours: item.friHours,
-    saturday_hours: item.satHours,
-    total_hours_decimal: item.totalHoursDecimal,
-    total_duration: item.totalText
-  }));
+  const { summary, rangeDateKeys } = buildSummary(entries, fromValue, toValue);
+  const dateHeaders = rangeDateKeys.map(toDateLabel);
+  const rows = summary.map(item => {
+    const row = { employee: item.employee };
+    rangeDateKeys.forEach((dateKey, idx) => {
+      row[dateHeaders[idx]] = toHourMinuteClock(item.dailyMsByDate[dateKey] || 0);
+    });
+    row.total_hour = toHourMinuteClock(item.totalMilliseconds || 0);
+    return row;
+  });
 
   if (typeof XLSX !== 'undefined' && XLSX.utils) {
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -663,8 +665,15 @@ function downloadSummaryCsv(entries, fromValue, toValue) {
   }
 
   // Fallback: export CSV if XLSX library is unavailable.
-  const header = ['employee', 'days_worked', 'worked_dates', 'total_hours_decimal', 'total_duration'];
-  const csvRows = summary.map(item => [item.employee, item.daysWorked, item.dailyHourLabels.join(', '), item.totalHoursDecimal, item.totalText].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const header = ['employee', ...dateHeaders, 'total_hour'];
+  const csvRows = summary.map(item => {
+    const values = [
+      item.employee,
+      ...rangeDateKeys.map(dateKey => toHourMinuteClock(item.dailyMsByDate[dateKey] || 0)),
+      toHourMinuteClock(item.totalMilliseconds || 0)
+    ];
+    return values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+  });
   const csv = [header.join(','), ...csvRows].join('\n');
   const csvWithBom = `\uFEFF${csv}`;
   const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
