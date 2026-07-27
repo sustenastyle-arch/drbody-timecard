@@ -503,8 +503,8 @@ function toLocalDateKey(date) {
 function toDateLabel(dateKey) {
   const [year, month, day] = dateKey.split('-').map(Number);
   const date = new Date(year, month - 1, day);
-  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
-  return `${month}月${day}日(${weekdayNames[date.getDay()]})`;
+  const weekdayNames = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+  return `${weekdayNames[date.getDay()]} ${month}月${day}日`;
 }
 
 function toHoursDecimal(ms) {
