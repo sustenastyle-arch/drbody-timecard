@@ -73,6 +73,15 @@ const STATUS_LABELS = {
   [ACTION_CLOCK_IN]: 'Clocked In',
   [ACTION_CLOCK_OUT]: 'Clocked Out'
 };
+const STAFF_NAME_STYLES = {
+  'Hiromi Tsunakawa': { bg: '#fb923c', fg: '#111827' },
+  'Megumi Tezeni': { bg: '#a855f7', fg: '#ffffff' },
+  'Betsy Maire': { bg: '#facc15', fg: '#111827' },
+  'Aya Chong': { bg: '#92400e', fg: '#ffffff' },
+  'Mai Marquez': { bg: '#16a34a', fg: '#ffffff' },
+  'Yuka Nishi': { bg: '#84cc16', fg: '#111827' },
+  'Mami Yamamoto': { bg: '#2563eb', fg: '#ffffff' }
+};
 
 function normalizeAction(action) {
   if (action === LEGACY_ACTION_CLOCK_IN) return ACTION_CLOCK_IN;
@@ -317,6 +326,12 @@ function getStatusClass(entry) {
   return 'not-clocked';
 }
 
+function getStaffNameInlineStyle(name) {
+  const style = STAFF_NAME_STYLES[name];
+  if (!style) return '';
+  return `background:${style.bg};color:${style.fg};`;
+}
+
 function isActionEnabled(latestAction, action) {
   const normalizedLatestAction = normalizeAction(latestAction);
   const normalizedAction = normalizeAction(action);
@@ -346,6 +361,7 @@ function renderGrid(entries) {
     const timeLabel = entry ? ` @ ${formatTime(entry.timestamp)}` : '';
     const statusText = entry ? `${currentState}${timeLabel}` : currentState;
     const statusClass = getStatusClass(entry);
+    const nameStyle = getStaffNameInlineStyle(name);
     const buttons = ACTIONS.map(action => {
       const disabled = !isActionEnabled(entry ? entry.action : null, action);
       return `<button data-employee="${name}" data-action="${action}" ${disabled ? 'disabled' : ''}>${action}</button>`;
@@ -353,7 +369,7 @@ function renderGrid(entries) {
 
     return `
       <div class="card">
-        <h3>${name}</h3>
+        <h3 class="staff-name" style="${nameStyle}">${name}</h3>
         <p>State: <strong class="status-text ${statusClass}">${statusText}</strong></p>
         <div class="button-row">
           ${buttons}
