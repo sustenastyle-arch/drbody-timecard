@@ -18,6 +18,13 @@ button.secondary { background: #64748b; }
 #historyTable { width: 100%; border-collapse: collapse; margin-top: 12px; }
 #historyTable th, #historyTable td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
 #historyTable thead { background: #e2e8f0; }
+.pin-config { background: #fff; border: 1px solid #d1d5db; border-radius: 12px; padding: 16px; margin-top: 20px; }
+.pin-config h2 { margin-top: 0; }
+.pin-row { display: grid; grid-template-columns: 1.2fr 0.9fr 0.8fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+.pin-row label { font-weight: 600; }
+.pin-row input { width: 100%; }
+.pin-row button { width: 100%; }
+.pin-warning { color: #b91c1c; margin: 8px 0 0; }
 .status-text.working { color: #0f766e; }
 .status-text.on-break { color: #c2410c; }
 .status-text.off-duty { color: #475569; }

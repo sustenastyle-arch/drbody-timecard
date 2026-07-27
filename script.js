@@ -10,6 +10,8 @@ const filterFrom = document.getElementById('filterFrom');
 const filterTo = document.getElementById('filterTo');
 const applyFilterButton = document.getElementById('applyFilter');
 const resetFilterButton = document.getElementById('resetFilter');
+const pinConfigContainer = document.getElementById('pinConfig');
+const PIN_STORAGE_KEY = 'drbody_timecard_pins';
 
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
 const EMPLOYEES = [
@@ -34,6 +36,63 @@ function loadLocalEntries() {
 
 function saveLocalEntries(entries) {
   localStorage.setItem(LOCAL_ENTRIES_KEY, JSON.stringify(entries));
+}
+
+function loadPins() {
+  try {
+    const json = localStorage.getItem(PIN_STORAGE_KEY);
+    return json ? JSON.parse(json) : {};
+  } catch (error) {
+    console.error(error);
+    return {};
+  }
+}
+
+function savePins(pins) {
+  localStorage.setItem(PIN_STORAGE_KEY, JSON.stringify(pins));
+}
+
+function verifyPin(employee) {
+  const pins = loadPins();
+  const expected = pins[employee];
+  if (!expected) return false;
+  const input = prompt(`${employee} の4桁の暗証番号を入力してください`);
+  if (input === null) return false;
+  return String(input).trim() === String(expected);
+}
+
+function renderPinConfig() {
+  const pins = loadPins();
+  pinConfigContainer.innerHTML = EMPLOYEES.map(name => {
+    const exists = !!pins[name];
+    return `
+      <div class="pin-row">
+        <label>${name}</label>
+        <input type="password" placeholder="4桁 PIN" data-employee="${name}" maxlength="4" />
+        <button class="pin-save" data-employee="${name}">保存</button>
+        <span class="pin-status">${exists ? 'Registered' : 'Not registered'}</span>
+      </div>
+    `;
+  }).join('');
+
+  pinConfigContainer.querySelectorAll('.pin-save').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const employee = btn.dataset.employee;
+      const input = pinConfigContainer.querySelector(`input[data-employee="${employee}"]`);
+      if (!input) return;
+      const pin = input.value.trim();
+      if (!/^[0-9]{4}$/.test(pin)) {
+        alert('4桁の数字を入力してください。');
+        return;
+      }
+      const pins = loadPins();
+      pins[employee] = pin;
+      savePins(pins);
+      messageEl.textContent = `${employee} のPINを保存しました。`;
+      renderGrid(loadLocalEntries());
+      renderPinConfig();
+    });
+  });
 }
 
 function createEntry(employee, action) {
@@ -76,6 +135,7 @@ function isActionEnabled(latestAction, action) {
 
 function renderGrid(entries) {
   const latestByEmployee = {};
+  const pins = loadPins();
   entries.forEach(entry => {
     latestByEmployee[entry.employee] = entry;
   });
@@ -85,16 +145,19 @@ function renderGrid(entries) {
     const currentState = getCurrentState(entry);
     const timeLabel = entry ? ` @ ${formatTime(entry.timestamp)}` : '';
     const statusText = entry ? `${currentState}${timeLabel}` : currentState;
+    const employeePin = pins[name];
+    const pinMissing = !employeePin;
+    const statusClass = getStatusClass(entry);
     const buttons = ACTIONS.map(action => {
-      const disabled = !isActionEnabled(entry ? entry.action : null, action);
+      const disabled = !isActionEnabled(entry ? entry.action : null, action) || pinMissing;
       return `<button data-employee="${name}" data-action="${action}" ${disabled ? 'disabled' : ''}>${action}</button>`;
     }).join('');
 
-    const statusClass = getStatusClass(entry);
     return `
       <div class="card">
         <h3>${name}</h3>
         <p>Status: <strong class="status-text ${statusClass}">${statusText}</strong></p>
+        ${pinMissing ? '<p class="pin-warning">PIN未設定です。下の設定から4桁を登録してください。</p>' : ''}
         <div class="button-row">
           ${buttons}
         </div>
@@ -107,6 +170,10 @@ function renderGrid(entries) {
       if (btn.disabled) return;
       const employee = btn.dataset.employee;
       const action = btn.dataset.action;
+      if (!verifyPin(employee)) {
+        messageEl.textContent = 'PINが一致しません。';
+        return;
+      }
       const entry = createEntry(employee, action);
       const entries = loadLocalEntries();
       entries.push(entry);
@@ -308,4 +375,4 @@ resetFilterButton.addEventListener('click', () => {
 const entries = loadLocalEntries();
 renderGrid(entries);
 renderHistory(entries);
-messageEl.textContent = 'Showing local history. Set backend URL to sync with the server.';
+  renderPinConfig();
