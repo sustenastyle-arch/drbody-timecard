@@ -220,6 +220,15 @@ function handleAdminLogout() {
   messageEl.textContent = 'Admin signed out.';
 }
 
+function tryAdminLoginWithEnter(event) {
+  const isEnter = event.key === 'Enter' || event.code === 'Enter' || event.keyCode === 13;
+  if (!isEnter) return;
+  if (isAdminAuthenticated) return;
+  if (event.isComposing) return;
+  event.preventDefault();
+  handleAdminLogin();
+}
+
 function toggleStaffManagement() {
   const isHidden = staffManagementSection.classList.toggle('hidden');
   toggleStaffManagementButton.textContent = isHidden ? 'Show Staff Management' : 'Hide Staff Management';
@@ -856,10 +865,12 @@ addEmployeeButton.addEventListener('click', addEmployee);
 adminLoginButton.addEventListener('click', handleAdminLogin);
 adminLogoutButton.addEventListener('click', handleAdminLogout);
 if (adminPasswordInput) {
-  adminPasswordInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      handleAdminLogin();
+  adminPasswordInput.addEventListener('keydown', tryAdminLoginWithEnter);
+}
+if (adminSection) {
+  adminSection.addEventListener('keydown', event => {
+    if (document.activeElement === adminPasswordInput) {
+      tryAdminLoginWithEnter(event);
     }
   });
 }
