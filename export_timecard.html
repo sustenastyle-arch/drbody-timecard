@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Timecard CSV → Excel Export</title>
+  <style>
+    body{font-family:system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; padding:18px;}
+    label{display:block;margin:8px 0 4px}
+    input, button, select{font-size:14px;padding:6px}
+    .minor{color:#666;font-size:13px}
+    table{border-collapse:collapse;width:100%;margin-top:10px}
+    table td, table th{border:1px solid #ddd;padding:6px}
+  </style>
+</head>
+<body>
+  <h2>Timecard CSV → Excel（従業員別シート、1–15 / 16–月末）</h2>
+  <p class="minor">MyTimeStation等のCSVを読み込み、従業員ごとにシートを作成します。開始日は2026-08-01以降のデータで運用してください。</p>
+
+  <label>CSVファイルを選択</label>
+  <input id="csvfile" type="file" accept=".csv" />
+  <div style="margin-top:8px">
+    <label>日付判定（自動検出を使うならそのまま）</label>
+    <select id="dateCols"></select>
+  </div>
+  <div style="margin-top:8px">
+    <label>従業員名カラム（自動検出を使うならそのまま）</label>
+    <select id="nameCols"></select>
+  </div>
+  <div style="margin-top:8px">
+    <label>打刻タイプカラム（IN/OUTなど、なければ空欄可）</label>
+    <select id="typeCols"></select>
+  </div>
+  <div style="margin-top:10px">
+    <button id="process">変換してダウンロード</button>
+  </div>
+  <div id="log" style="margin-top:12px;color:#222"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script>
+    const fileInput = document.getElementById('csvfile');
+    const dateCols = document.getElementById('dateCols');
+    const nameCols = document.getElementById('nameCols');
+    const typeCols = document.getElementById('typeCols');
+    const log = document.getElementById('log');
+
+    let parsedData = null;
+    let headers = [];
+
+    function appendLog(s){ log.innerText = s; }
+
+    fileInput.addEventListener('change', e=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      appendLog('読み込み中...');
+      Papa.parse(f, {header:true, skipEmptyLines:true, dynamicTyping:false,
+        complete(result){
+          parsedData = result.data;
+          headers = result.meta.fields || [];
+          populateSelectors(headers);
+          appendLog('読み込み完了: ' + parsedData.length + ' 行。列を確認してください。');
+        }
+      });
+    });
+
+    function populateSelectors(h){
+      [dateCols, nameCols, typeCols].forEach(s=>{ s.innerHTML = '<option value="">(自動)</option>'; headers.forEach(hd=>{ const opt=document.createElement('option'); opt.value=hd; opt.textContent=hd; s.appendChild(opt); }) });
+    }
+
+    function detectColumn(fieldNames, candidates){
+      if(!fieldNames) return '';
+      const low = fieldNames.map(f=>f.toLowerCase());
+      for(const c of candidates){
+        const idx = low.findIndex(x=>x.indexOf(c) !== -1);
+        if(idx !== -1) return fieldNames[idx];
+      }
+      return '';
+    }
+
+    function parseDateTime(row, dateField){
+      // Try to find a datetime-like value among fields
+      const keys = Object.keys(row);
+      // If dateField provided, use it
+      if(dateField && row[dateField]){
+        const v = row[dateField];
+        const dt = new Date(v);
+        if(!isNaN(dt)) return dt;
+        // try splitting if contains space
+        const sp = String(v).replace(/\s+/g,' ').trim();
+        const dt2 = new Date(sp);
+        if(!isNaN(dt2)) return dt2;
+      }
+      // fallback: try any field that looks like timestamp
+      for(const k of keys){
+        const v = row[k];
+        if(!v) continue;
+        // contains 4-digit year?
+        if(/\d{4}[\/-]\d{1,2}[\/-]\d{1,2}/.test(v) || /\d{1,2}[:]\d{2}/.test(v)){
+          const dt = new Date(String(v));
+          if(!isNaN(dt)) return dt;
+        }
+      }
+      return null;
+    }
+
+    function toHoursDecimal(ms){ return Math.round(ms/3600000*100)/100; }
+    function toHhMm(ms){
+      const total = Math.floor(ms/60000); const h = Math.floor(total/60); const m = total%60; return h + ':' + String(m).padStart(2,'0');
+    }
+
+    document.getElementById('process').addEventListener('click', ()=>{
+      if(!parsedData) { appendLog('まずCSVを読み込んでください。'); return; }
+      appendLog('処理中...');
+
+      const chosenDate = dateCols.value || detectColumn(headers, ['timestamp','datetime','date_time','date','time','punch']);
+      const chosenName = nameCols.value || detectColumn(headers, ['employee','name','staff','worker']);
+      const chosenType = typeCols.value || detectColumn(headers, ['type','action','status','punch']);
+
+      if(!chosenName){ appendLog('従業員名カラムが見つかりません。列を手動で選択してください。'); return; }
+      if(!chosenDate){ appendLog('日時カラムが見つかりません。列を手動で選択してください。'); return; }
+
+      // build per-employee records with parsed datetimes
+      const groups = {};
+      parsedData.forEach(r=>{
+        const name = r[chosenName] ? String(r[chosenName]).trim() : 'Unknown';
+        const dt = parseDateTime(r, chosenDate);
+        if(!dt) return; // skip
+        const type = chosenType ? (r[chosenType]||'') : '';
+        if(!groups[name]) groups[name]=[];
+        groups[name].push({raw:r, dt:dt, type: String(type).toLowerCase()});
+      });
+
+      const wb = XLSX.utils.book_new();
+      const summaryRows = [];
+      const allDetailRows = [];
+
+      Object.keys(groups).forEach(name=>{
+        const recs = groups[name].sort((a,b)=>a.dt - b.dt);
+        // group by date
+        const daily = {};
+        recs.forEach(r=>{
+          const dKey = r.dt.getFullYear() + '-' + (r.dt.getMonth()+1) + '-' + r.dt.getDate();
+          if(!daily[dKey]) daily[dKey]=[];
+          daily[dKey].push(r);
+        });
+        const weeklyTotals = {}; // weekStartISO -> ms
+        const periodTotals = { '1-15':0, '16-end':0 };
+
+        Object.keys(daily).sort().forEach(dateKey=>{
+          const events = daily[dateKey].sort((a,b)=>a.dt-b.dt);
+          // pair IN/OUT heuristic
+          let i=0; let pairs=[];
+          while(i<events.length){
+            let inEvt = null; let outEvt = null;
+            if(events[i].type && events[i].type.indexOf('in')!==-1){ inEvt = events[i]; i++; }
+            else if(events[i].type && events[i].type.indexOf('out')!==-1){ i++; continue; }
+            else { inEvt = events[i]; i++; }
+            while(i<events.length){
+              if(events[i].type && events[i].type.indexOf('out')!==-1){ outEvt = events[i]; i++; break; }
+              outEvt = events[i]; i++; break;
+            }
+            if(inEvt && outEvt){ pairs.push({in:inEvt, out:outEvt}); }
+          }
+
+          let dayMs = 0;
+          pairs.forEach(p=>{ const d = p.out.dt - p.in.dt; if(d>0) dayMs += d; });
+
+          const dateObj = new Date(dateKey);
+          const wkStart = new Date(dateObj);
+          wkStart.setDate(dateObj.getDate() - dateObj.getDay());
+          const wkKey = wkStart.toISOString().slice(0,10);
+          weeklyTotals[wkKey] = (weeklyTotals[wkKey]||0) + dayMs;
+
+          const dayNum = (new Date(dateKey)).getDate();
+          if(dayNum>=1 && dayNum<=15) periodTotals['1-15'] += dayMs; else periodTotals['16-end'] += dayMs;
+
+          if(pairs.length===0){ allDetailRows.push({Employee:name, Date:dateKey, In:'', Out:'', Duration:'0:00', WeekStart:wkKey, Period: dayNum<=15 ? '1-15' : '16-end'}); }
+          pairs.forEach(p=>{
+            allDetailRows.push({ Employee: name, Date: dateKey, In: p.in.dt.toLocaleString(), Out: p.out.dt.toLocaleString(), Duration: toHhMm(p.out.dt - p.in.dt), WeekStart: wkKey, Period: dayNum<=15 ? '1-15' : '16-end' });
+          });
+        });
+
+        // create summary table for this employee
+        const summary = [];
+        Object.keys(weeklyTotals).sort().forEach(wk=>{ summary.push({Type:'Week', WeekStart:wk, Hours: toHoursDecimal(weeklyTotals[wk]), Hhmm: toHhMm(weeklyTotals[wk])}); });
+        summary.push({Type:'Period 1-15', WeekStart:'', Hours: toHoursDecimal(periodTotals['1-15']), Hhmm: toHhMm(periodTotals['1-15'])});
+        summary.push({Type:'Period 16-end', WeekStart:'', Hours: toHoursDecimal(periodTotals['16-end']), Hhmm: toHhMm(periodTotals['16-end'])});
+        const ws2 = XLSX.utils.json_to_sheet(summary);
+        const sname = (name + '_summary').substring(0,31);
+        // keep per-employee summary sheets optional: append them
+        XLSX.utils.book_append_sheet(wb, ws2, sname);
+
+        summaryRows.push({Employee:name, '1-15(hrs)': toHoursDecimal(periodTotals['1-15']), '16-end(hrs)': toHoursDecimal(periodTotals['16-end'])});
+      });
+
+      // single sheet with all detail rows
+      const wsAll = XLSX.utils.json_to_sheet(allDetailRows);
+      XLSX.utils.book_append_sheet(wb, wsAll, 'DETAILS');
+
+      // overall summary
+      const wsSum = XLSX.utils.json_to_sheet(summaryRows);
+      XLSX.utils.book_append_sheet(wb, wsSum, 'SUMMARY');
+
+      const now = new Date();
+      const fname = 'timecard_export_' + now.toISOString().slice(0,10) + '.xlsx';
+      XLSX.writeFile(wb, fname);
+      appendLog('生成とダウンロードを実行しました: ' + fname);
+    });
+  </script>
+</body>
+</html>
