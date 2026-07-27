@@ -10,6 +10,13 @@ const EMPLOYEES = [
   'Hiromi Tsunakawa', 'Yuki Tanaka', 'Yuka Nishi', 'Megumi Tezeni',
   'Mami Yamamoto', 'Betsy Maire', 'Aya Chong', 'Mai Marquez'
 ];
+const ACTIONS = ['Clock In', 'Break Start', 'Break End', 'Clock Out'];
+const STATUS_LABELS = {
+  'Clock In': 'Working',
+  'Clock Out': 'Off Duty',
+  'Break Start': 'On Break',
+  'Break End': 'Working'
+};
 
 function loadLocalEntries() {
   try {
@@ -38,6 +45,35 @@ function formatTime(iso) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
+function getCurrentState(entry) {
+  if (!entry) return 'Not clocked';
+  return STATUS_LABELS[entry.action] || entry.action;
+}
+
+function getStatusClass(entry) {
+  if (!entry) return 'not-clocked';
+  if (entry.action === 'Clock In' || entry.action === 'Break End') return 'working';
+  if (entry.action === 'Break Start') return 'on-break';
+  if (entry.action === 'Clock Out') return 'off-duty';
+  return 'not-clocked';
+}
+
+function isActionEnabled(latestAction, action) {
+  if (!latestAction) {
+    return action === 'Clock In';
+  }
+  if (latestAction === 'Clock In' || latestAction === 'Break End') {
+    return action === 'Break Start' || action === 'Clock Out';
+  }
+  if (latestAction === 'Break Start') {
+    return action === 'Break End' || action === 'Clock Out';
+  }
+  if (latestAction === 'Clock Out') {
+    return action === 'Clock In';
+  }
+  return action === 'Clock In';
+}
+
 function renderGrid(entries) {
   const latestByEmployee = {};
   entries.forEach(entry => {
@@ -46,19 +82,29 @@ function renderGrid(entries) {
 
   employeeGrid.innerHTML = EMPLOYEES.map(name => {
     const entry = latestByEmployee[name];
-    const status = entry ? `${entry.action} @ ${formatTime(entry.timestamp)}` : '未打刻';
+    const currentState = getCurrentState(entry);
+    const timeLabel = entry ? ` @ ${formatTime(entry.timestamp)}` : '';
+    const statusText = entry ? `${currentState}${timeLabel}` : currentState;
+    const buttons = ACTIONS.map(action => {
+      const disabled = !isActionEnabled(entry ? entry.action : null, action);
+      return `<button data-employee="${name}" data-action="${action}" ${disabled ? 'disabled' : ''}>${action}</button>`;
+    }).join('');
+
+    const statusClass = getStatusClass(entry);
     return `
       <div class="card">
         <h3>${name}</h3>
-        <p>状態: <strong>${status}</strong></p>
-        <button data-employee="${name}" data-action="Clock In">Clock In</button>
-        <button class="secondary" data-employee="${name}" data-action="Clock Out">Clock Out</button>
+        <p>Status: <strong class="status-text ${statusClass}">${statusText}</strong></p>
+        <div class="button-row">
+          ${buttons}
+        </div>
       </div>
     `;
   }).join('');
 
   employeeGrid.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
       const employee = btn.dataset.employee;
       const action = btn.dataset.action;
       const entry = createEntry(employee, action);
@@ -67,7 +113,7 @@ function renderGrid(entries) {
       saveLocalEntries(entries);
       updateHistory(entries);
       renderGrid(entries);
-      messageEl.textContent = 'ローカルに保存しました。';
+      messageEl.textContent = 'Saved locally.';
       await sendToBackend(entry);
     });
   });
@@ -94,49 +140,49 @@ function downloadCsv(entries) {
 async function sendToBackend(entry) {
   const apiRoot = API_INPUT.value.trim();
   if (!apiRoot || apiRoot.includes('YOUR_NETLIFY_SITE')) {
-    messageEl.textContent = 'バックエンド URL を設定してください。';
+    messageEl.textContent = 'Please set the backend URL.';
     return;
   }
   try {
-    messageEl.textContent = 'バックエンドに送信中...';
+    messageEl.textContent = 'Sending to backend...';
     const res = await fetch(`${apiRoot}/save-timecard`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entry })
     });
     if (!res.ok) {
-      throw new Error(`保存エラー: ${res.status}`);
+      throw new Error(`Save error: ${res.status}`);
     }
     const result = await res.json();
-    messageEl.textContent = 'バックエンドに保存しました。';
+    messageEl.textContent = 'Saved to backend.';
     return result;
   } catch (error) {
     console.error(error);
-    messageEl.textContent = 'バックエンド保存に失敗しました。コンソールを確認してください。';
+    messageEl.textContent = 'Backend save failed. Check the console.';
   }
 }
 
 async function loadBackendEntries() {
   const apiRoot = API_INPUT.value.trim();
   if (!apiRoot || apiRoot.includes('YOUR_NETLIFY_SITE')) {
-    messageEl.textContent = 'バックエンド URL を設定してください。';
+    messageEl.textContent = 'Please set the backend URL.';
     return;
   }
   try {
-    messageEl.textContent = 'バックエンドから読み込み中...';
+    messageEl.textContent = 'Loading backend history...';
     const res = await fetch(`${apiRoot}/get-timecard`);
     if (!res.ok) {
-      throw new Error(`読み込みエラー: ${res.status}`);
+      throw new Error(`Load error: ${res.status}`);
     }
     const result = await res.json();
     const entries = Array.isArray(result) ? result : result.entries || [];
     saveLocalEntries(entries);
     renderGrid(entries);
     updateHistory(entries);
-    messageEl.textContent = 'バックエンド履歴を読み込みました。';
+    messageEl.textContent = 'Loaded backend history.';
   } catch (error) {
     console.error(error);
-    messageEl.textContent = 'バックエンド読み込みに失敗しました。';
+    messageEl.textContent = 'Failed to load backend history.';
   }
 }
 
@@ -148,4 +194,4 @@ downloadCsvButton.addEventListener('click', () => {
 const entries = loadLocalEntries();
 renderGrid(entries);
 updateHistory(entries);
-messageEl.textContent = 'ローカル履歴を表示しています。バックエンド URL を設定すると同期できます。';
+messageEl.textContent = 'Showing local history. Set backend URL to sync with the server.';

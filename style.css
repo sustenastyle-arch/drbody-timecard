@@ -8,6 +8,12 @@ input[type='text'] { width: 100%; padding: 10px; border: 1px solid #ccc; border-
 .card h3 { margin: 0 0 8px; font-size: 18px; }
 .card p { margin: 4px 0; }
 button { cursor: pointer; border: none; border-radius: 8px; padding: 10px 14px; background: #2563eb; color: #fff; font-weight: 600; }
+button[disabled] { opacity: 0.45; cursor: not-allowed; }
 button.secondary { background: #64748b; }
+.button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.status-text.working { color: #0f766e; }
+.status-text.on-break { color: #c2410c; }
+.status-text.off-duty { color: #475569; }
+.status-text.not-clocked { color: #6b7280; }
 pre { background: #020617; color: #e2e8f0; padding: 14px; border-radius: 12px; overflow-x: auto; }

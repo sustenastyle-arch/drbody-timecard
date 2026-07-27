@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -9,28 +9,28 @@
 <body>
   <header>
     <h1>Time Clock</h1>
-    <p>GitHub Pages フロント + Netlify Functions バックエンドで履歴を永続化します。</p>
+    <p>Persistent timecard with Netlify Functions backend.</p>
   </header>
 
   <section class="config">
-    <label>Netlify 関数 URL（例：https://your-site.netlify.app/.netlify/functions）</label>
+    <label>Netlify function URL (e.g. https://your-site.netlify.app/.netlify/functions)</label>
     <input id="apiRoot" type="text" value="https://YOUR_NETLIFY_SITE.netlify.app/.netlify/functions" />
-    <small>この URL を設定すると、バックエンド保存が有効になります。</small>
+    <small>Set this URL to enable backend storage.</small>
   </section>
 
   <section class="status">
-    <div id="message">読み込み中...</div>
+    <div id="message">Loading...</div>
   </section>
 
   <section class="grid" id="employeeGrid"></section>
 
   <section class="action-row">
-    <button id="loadBackend">バックエンド履歴を読み込む</button>
-    <button id="downloadCsv">CSV でダウンロード</button>
+    <button id="loadBackend">Load backend history</button>
+    <button id="downloadCsv">Download CSV</button>
   </section>
 
   <section>
-    <h2>履歴</h2>
+    <h2>History</h2>
     <pre id="historyOutput"></pre>
   </section>
 
