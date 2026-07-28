@@ -93,5 +93,11 @@
     "employee": "Health Check",
     "action": "Clock In",
     "timestamp": "2026-07-27T23:59:00.000Z"
+  },
+  {
+    "id": "e153aaa8-9e60-4a9c-be97-a134b8159242",
+    "employee": "Mami Yamamoto",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:26:37.940Z"
   }
 ]
