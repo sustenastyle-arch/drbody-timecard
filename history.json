@@ -99,5 +99,11 @@
     "employee": "Mami Yamamoto",
     "action": "Clock In",
     "timestamp": "2026-07-27T23:26:37.940Z"
+  },
+  {
+    "id": "17ed3d4d-9abc-4e4a-a507-90425a27e516",
+    "employee": "Mami Yamamoto",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:26:39.632Z"
   }
 ]
