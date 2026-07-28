@@ -15,5 +15,11 @@
     "employee": "Yuki Tanaka",
     "action": "Clock Out",
     "timestamp": "2026-07-27T23:24:44.178Z"
+  },
+  {
+    "id": "fb83436e-b099-4a01-8526-ffc16ea44806",
+    "employee": "Yuka Nishi",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:24:44.895Z"
   }
 ]
