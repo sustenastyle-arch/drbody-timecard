@@ -1,10 +1,5 @@
 [
   {
-    "employee": "Health Check",
-    "action": "Clock In",
-    "timestamp": "2026-07-27T23:59:00.000Z"
-  },
-  {
     "id": "9a1c01cb-d0f4-4f4f-b505-ee97da865fac",
     "employee": "Hiromi Tsunakawa",
     "action": "Clock Out",
@@ -27,5 +22,76 @@
     "employee": "Megumi Tezeni",
     "action": "Clock Out",
     "timestamp": "2026-07-27T23:24:45.639Z"
+  },
+  {
+    "id": "41f4a6f2-2243-428d-81fd-9eb6d5f08c82",
+    "employee": "Mami Yamamoto",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:24:46.452Z"
+  },
+  {
+    "id": "7536637f-9e9f-4f1f-9a8a-54ba4d297c88",
+    "employee": "Aya Chong",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:24:49.052Z"
+  },
+  {
+    "id": "7babf4e1-b93a-48b8-821c-45ecf7e1741a",
+    "employee": "Mai Marquez",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:24:49.620Z"
+  },
+  {
+    "id": "01860176-4f34-40bd-9871-7b5d2e38a353",
+    "employee": "Hiromi Tsunakawa",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:33.746Z"
+  },
+  {
+    "id": "78490c8f-ee50-4bb1-98ff-f6a7eb108e0b",
+    "employee": "Yuki Tanaka",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:34.908Z"
+  },
+  {
+    "id": "4f7b3dff-2799-4af7-aff4-f6fc48546e9c",
+    "employee": "Yuka Nishi",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:35.531Z"
+  },
+  {
+    "id": "79b4c063-59c5-40b1-b5f5-9c6f4142a6a3",
+    "employee": "Megumi Tezeni",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:36.168Z"
+  },
+  {
+    "id": "61f5fe56-0aad-4958-88d4-e23591985d63",
+    "employee": "Mami Yamamoto",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:36.781Z"
+  },
+  {
+    "id": "ca0c147a-ce41-4d0c-a151-18a942ec64d1",
+    "employee": "Betsy Maire",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:37.533Z"
+  },
+  {
+    "id": "d3937952-29c0-443e-950e-535de0997aea",
+    "employee": "Aya Chong",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:38.548Z"
+  },
+  {
+    "id": "30a292ba-bec0-4559-813d-2aa58b1e41a9",
+    "employee": "Mai Marquez",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:33:39.126Z"
+  },
+  {
+    "employee": "Health Check",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:59:00.000Z"
   }
 ]
