@@ -3,5 +3,11 @@
     "employee": "Health Check",
     "action": "Clock In",
     "timestamp": "2026-07-27T23:59:00.000Z"
+  },
+  {
+    "id": "9a1c01cb-d0f4-4f4f-b505-ee97da865fac",
+    "employee": "Hiromi Tsunakawa",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:24:43.298Z"
   }
 ]
