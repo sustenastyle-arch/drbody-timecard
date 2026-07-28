@@ -112,6 +112,10 @@ button.secondary { background: #64748b; }
 .employee-item button { background: #ef4444; }
 .employee-item button:hover { background: #dc2626; }
 .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.history-toggle-row {
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
 .date-range-actions {
   display: flex;
   flex-wrap: wrap;

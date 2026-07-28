@@ -31,6 +31,8 @@ const filterFrom = document.getElementById('filterFrom');
 const filterTo = document.getElementById('filterTo');
 const applyFilterButton = document.getElementById('applyFilter');
 const resetFilterButton = document.getElementById('resetFilter');
+const historySection = document.getElementById('historySection');
+const toggleHistoryButton = document.getElementById('toggleHistoryButton');
 const showStaffView = document.getElementById('showStaffView');
 const showAdminView = document.getElementById('showAdminView');
 const staffSection = document.getElementById('staffSection');
@@ -46,6 +48,7 @@ const rememberAdminDevice = document.getElementById('rememberAdminDevice');
 const ADMIN_PASSWORD_KEY = 'drbody_timecard_admin_password';
 const FIXED_ADMIN_PASSWORD = 'drbodytimes2019';
 const ADMIN_TRUSTED_DEVICE_KEY = 'drbody_timecard_admin_trusted_device';
+const ADMIN_HISTORY_VISIBLE_KEY = 'drbody_timecard_history_visible';
 let isAdminAuthenticated = false;
 const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
@@ -179,6 +182,24 @@ function saveTrustedDevice(enabled) {
   }
 }
 
+function loadHistoryVisible() {
+  return localStorage.getItem(ADMIN_HISTORY_VISIBLE_KEY) === '1';
+}
+
+function saveHistoryVisible(visible) {
+  if (visible) {
+    localStorage.setItem(ADMIN_HISTORY_VISIBLE_KEY, '1');
+  } else {
+    localStorage.removeItem(ADMIN_HISTORY_VISIBLE_KEY);
+  }
+}
+
+function setHistoryVisible(visible) {
+  if (!historySection || !toggleHistoryButton) return;
+  historySection.classList.toggle('hidden', !visible);
+  toggleHistoryButton.textContent = visible ? 'Hide History' : 'Show History';
+}
+
 function verifyAdminPassword() {
   if (!isAdminAuthenticated) {
     alert('Please sign in as admin first.');
@@ -220,6 +241,7 @@ function updateAdminLoginState() {
     adminLoginButton.classList.add('hidden');
     adminPasswordInput.disabled = true;
     adminLoginHint.textContent = 'Admin mode active. You can edit history and manage staff.';
+    setHistoryVisible(loadHistoryVisible());
   } else {
     adminPanel.classList.add('hidden');
     staffManagementSection.classList.add('hidden');
@@ -228,6 +250,7 @@ function updateAdminLoginState() {
     adminLoginButton.classList.remove('hidden');
     adminPasswordInput.disabled = false;
     adminLoginHint.textContent = 'Enter the admin password and click Sign In.';
+    setHistoryVisible(false);
   }
 }
 
@@ -266,6 +289,13 @@ function tryAdminLoginWithEnter(event) {
 function toggleStaffManagement() {
   const isHidden = staffManagementSection.classList.toggle('hidden');
   toggleStaffManagementButton.textContent = isHidden ? 'Show Staff Management' : 'Hide Staff Management';
+}
+
+function toggleHistorySection() {
+  if (!historySection) return;
+  const nextVisible = historySection.classList.contains('hidden');
+  setHistoryVisible(nextVisible);
+  saveHistoryVisible(nextVisible);
 }
 
 function createEntry(employee, action) {
@@ -929,6 +959,9 @@ saveBackendAllButton.addEventListener('click', () => {
 });
 if (toggleStaffManagementButton) {
   toggleStaffManagementButton.addEventListener('click', toggleStaffManagement);
+}
+if (toggleHistoryButton) {
+  toggleHistoryButton.addEventListener('click', toggleHistorySection);
 }
 if (applyFilterButton) {
   applyFilterButton.addEventListener('click', () => renderHistory(loadLocalEntries(), currentView === 'admin' && isAdminAuthenticated));
