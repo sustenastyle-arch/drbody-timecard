@@ -42,6 +42,18 @@
     "timestamp": "2026-07-27T23:24:49.620Z"
   },
   {
+    "id": "e153aaa8-9e60-4a9c-be97-a134b8159242",
+    "employee": "Mami Yamamoto",
+    "action": "Clock In",
+    "timestamp": "2026-07-27T23:26:37.940Z"
+  },
+  {
+    "id": "17ed3d4d-9abc-4e4a-a507-90425a27e516",
+    "employee": "Mami Yamamoto",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:26:39.632Z"
+  },
+  {
     "id": "01860176-4f34-40bd-9871-7b5d2e38a353",
     "employee": "Hiromi Tsunakawa",
     "action": "Clock In",
@@ -93,17 +105,5 @@
     "employee": "Health Check",
     "action": "Clock In",
     "timestamp": "2026-07-27T23:59:00.000Z"
-  },
-  {
-    "id": "e153aaa8-9e60-4a9c-be97-a134b8159242",
-    "employee": "Mami Yamamoto",
-    "action": "Clock In",
-    "timestamp": "2026-07-27T23:26:37.940Z"
-  },
-  {
-    "id": "17ed3d4d-9abc-4e4a-a507-90425a27e516",
-    "employee": "Mami Yamamoto",
-    "action": "Clock Out",
-    "timestamp": "2026-07-27T23:26:39.632Z"
   }
 ]
