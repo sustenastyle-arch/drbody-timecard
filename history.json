@@ -105,35 +105,5 @@
     "employee": "Health Check",
     "action": "Clock In",
     "timestamp": "2026-07-27T23:59:00.000Z"
-  },
-  {
-    "id": "d6e478fb-28a5-4742-9cdc-fc486d75f7a6",
-    "employee": "Hiromi Tsunakawa",
-    "action": "Clock In",
-    "timestamp": "2026-07-28T01:08:42.001Z"
-  },
-  {
-    "id": "0b6332a2-a197-468d-ba8d-d02cd92b4ff5",
-    "employee": "Yuki Tanaka",
-    "action": "Clock In",
-    "timestamp": "2026-07-28T01:08:44.491Z"
-  },
-  {
-    "id": "58a25749-01ad-4e0d-97ac-a3f9e6576f8b",
-    "employee": "Yuka Nishi",
-    "action": "Clock In",
-    "timestamp": "2026-07-28T01:08:45.955Z"
-  },
-  {
-    "id": "469ed494-11b1-4afd-871b-ea2296371bf7",
-    "employee": "Megumi Tezeni",
-    "action": "Clock In",
-    "timestamp": "2026-07-28T01:08:46.873Z"
-  },
-  {
-    "id": "3cfdb9e0-eab0-4e6d-a00f-96e607592fd1",
-    "employee": "Mami Yamamoto",
-    "action": "Clock In",
-    "timestamp": "2026-07-28T01:08:48.759Z"
   }
 ]
