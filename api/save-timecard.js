@@ -81,7 +81,10 @@ export default async function handler(req, res) {
 
   let payload;
   try {
-    payload = JSON.parse(req.body);
+    payload = (typeof req.body === 'string') ? JSON.parse(req.body) : req.body;
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Invalid payload');
+    }
   } catch (error) {
     res.writeHead(400, CORS_HEADERS);
     res.end(JSON.stringify({ error: 'Invalid JSON' }));
