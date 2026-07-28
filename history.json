@@ -153,5 +153,11 @@
     "employee": "Mami Yamamoto",
     "action": "Clock Out",
     "timestamp": "2026-07-28T01:55:04.316Z"
+  },
+  {
+    "id": "be7d5017-b3e6-49d4-a563-7a5eac98fd2d",
+    "employee": "Aya Chong",
+    "action": "Clock Out",
+    "timestamp": "2026-07-28T01:55:06.260Z"
   }
 ]
