@@ -24,6 +24,7 @@ const historyTable = document.getElementById('historyTable');
 const loadBackendButton = document.getElementById('loadBackend');
 const downloadCsvButton = document.getElementById('downloadCsv');
 const saveBackendAllButton = document.getElementById('saveBackendAll');
+const adminSyncMessage = document.getElementById('adminSyncMessage');
 const exportFrom = document.getElementById('exportFrom');
 const exportTo = document.getElementById('exportTo');
 const filterFrom = document.getElementById('filterFrom');
@@ -187,6 +188,12 @@ function saveEmployees(employees) {
 
 function getSafeFilterValue(filterElement) {
   return filterElement && filterElement.value ? filterElement.value : '';
+}
+
+function setAdminSyncMessage(text, isError = false) {
+  if (!adminSyncMessage) return;
+  adminSyncMessage.textContent = text || '';
+  adminSyncMessage.style.color = isError ? '#b91c1c' : '#475569';
 }
 
 function updateAdminLoginState() {
@@ -523,7 +530,7 @@ async function saveEditEntryFromModal() {
   renderGrid(entries);
   renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
   messageEl.textContent = 'Entry updated locally. Syncing backend...';
-  await saveAllToBackend(entries);
+  await saveAllToBackend(entries, { silent: true });
   closeEditEntryModal();
 }
 
@@ -548,17 +555,24 @@ async function deleteEntry(entries, index) {
   renderGrid(entries);
   renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
   messageEl.textContent = 'Entry deleted locally. Syncing backend...';
-  await saveAllToBackend(entries);
+  await saveAllToBackend(entries, { silent: true });
 }
 
-async function saveAllToBackend(entries) {
+async function saveAllToBackend(entries, options = {}) {
+  const silent = !!options.silent;
   const apiRoot = getApiRoot();
   if (!apiRoot) {
     messageEl.textContent = 'Please set the backend URL.';
+    if (!silent) {
+      setAdminSyncMessage('Backend URL is not set.', true);
+    }
     return;
   }
   try {
     messageEl.textContent = 'Saving all entries to backend...';
+    if (!silent) {
+      setAdminSyncMessage('Saving all entries...');
+    }
     const res = await fetch(`${apiRoot}/save-timecard`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -568,9 +582,15 @@ async function saveAllToBackend(entries) {
       throw new Error(`Save error: ${res.status}`);
     }
     messageEl.textContent = 'All entries saved to backend.';
+    if (!silent) {
+      setAdminSyncMessage('All entries saved.');
+    }
   } catch (error) {
     console.error(error);
     messageEl.textContent = 'Failed to save all entries to backend.';
+    if (!silent) {
+      setAdminSyncMessage('Save failed. Please try again.', true);
+    }
   }
 }
 
@@ -862,7 +882,7 @@ downloadCsvButton.addEventListener('click', () => {
   downloadSummaryCsv(loadLocalEntries(), exportFrom ? exportFrom.value : '', exportTo ? exportTo.value : '');
 });
 saveBackendAllButton.addEventListener('click', () => {
-  saveAllToBackend(loadLocalEntries());
+  saveAllToBackend(loadLocalEntries(), { silent: false });
 });
 if (toggleStaffManagementButton) {
   toggleStaffManagementButton.addEventListener('click', toggleStaffManagement);
