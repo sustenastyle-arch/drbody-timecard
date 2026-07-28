@@ -42,10 +42,13 @@
       </div>
     </section>
 
-    <section class="config">
-      <label>Backend API URL (optional)</label>
-      <input id="apiRoot" type="text" placeholder="https://your-site.vercel.app/api" value="" />
-      <small>Leave blank for local use.</small>
+    <section class="config advanced-config">
+      <button id="toggleAdvancedConfig" class="secondary">Show Advanced Settings</button>
+      <div id="advancedConfigPanel" class="hidden">
+        <label>Backend API URL (optional)</label>
+        <input id="apiRoot" type="text" placeholder="https://your-site.vercel.app/api" value="" />
+        <small>Leave blank for local use.</small>
+      </div>
     </section>
 
     <section id="adminPanel" class="hidden">

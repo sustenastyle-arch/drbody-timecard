@@ -23,6 +23,16 @@ header { margin-bottom: 20px; }
 h1 { margin: 0 0 8px; font-size: 28px; }
 .config label, .action-row button, .status { display: block; margin-bottom: 10px; }
 input[type='text'], input[type='date'], select { width: 100%; padding: 14px 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 10px; }
+.advanced-config {
+  margin-top: 10px;
+}
+#advancedConfigPanel {
+  margin-top: 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+}
 .admin-login {
   margin-top: 16px;
 }

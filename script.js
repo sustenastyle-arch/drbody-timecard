@@ -39,6 +39,8 @@ const staffSection = document.getElementById('staffSection');
 const adminSection = document.getElementById('adminSection');
 const adminLoginSection = document.getElementById('adminLoginSection');
 const adminPanel = document.getElementById('adminPanel');
+const advancedConfigPanel = document.getElementById('advancedConfigPanel');
+const toggleAdvancedConfigButton = document.getElementById('toggleAdvancedConfig');
 const staffManagementSection = document.getElementById('staffManagementSection');
 const toggleStaffManagementButton = document.getElementById('toggleStaffManagement');
 const adminLoginButton = document.getElementById('adminLoginButton');
@@ -49,6 +51,7 @@ const ADMIN_PASSWORD_KEY = 'drbody_timecard_admin_password';
 const FIXED_ADMIN_PASSWORD = 'drbodytimes2019';
 const ADMIN_TRUSTED_DEVICE_KEY = 'drbody_timecard_admin_trusted_device';
 const ADMIN_HISTORY_VISIBLE_KEY = 'drbody_timecard_history_visible';
+const ADMIN_ADVANCED_CONFIG_VISIBLE_KEY = 'drbody_timecard_advanced_config_visible';
 let isAdminAuthenticated = false;
 const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
@@ -200,6 +203,24 @@ function setHistoryVisible(visible) {
   toggleHistoryButton.textContent = visible ? 'Hide History' : 'Show History';
 }
 
+function loadAdvancedConfigVisible() {
+  return localStorage.getItem(ADMIN_ADVANCED_CONFIG_VISIBLE_KEY) === '1';
+}
+
+function saveAdvancedConfigVisible(visible) {
+  if (visible) {
+    localStorage.setItem(ADMIN_ADVANCED_CONFIG_VISIBLE_KEY, '1');
+  } else {
+    localStorage.removeItem(ADMIN_ADVANCED_CONFIG_VISIBLE_KEY);
+  }
+}
+
+function setAdvancedConfigVisible(visible) {
+  if (!advancedConfigPanel || !toggleAdvancedConfigButton) return;
+  advancedConfigPanel.classList.toggle('hidden', !visible);
+  toggleAdvancedConfigButton.textContent = visible ? 'Hide Advanced Settings' : 'Show Advanced Settings';
+}
+
 function verifyAdminPassword() {
   if (!isAdminAuthenticated) {
     alert('Please sign in as admin first.');
@@ -296,6 +317,13 @@ function toggleHistorySection() {
   const nextVisible = historySection.classList.contains('hidden');
   setHistoryVisible(nextVisible);
   saveHistoryVisible(nextVisible);
+}
+
+function toggleAdvancedConfig() {
+  if (!advancedConfigPanel) return;
+  const nextVisible = advancedConfigPanel.classList.contains('hidden');
+  setAdvancedConfigVisible(nextVisible);
+  saveAdvancedConfigVisible(nextVisible);
 }
 
 function createEntry(employee, action) {
@@ -963,6 +991,9 @@ if (toggleStaffManagementButton) {
 if (toggleHistoryButton) {
   toggleHistoryButton.addEventListener('click', toggleHistorySection);
 }
+if (toggleAdvancedConfigButton) {
+  toggleAdvancedConfigButton.addEventListener('click', toggleAdvancedConfig);
+}
 if (applyFilterButton) {
   applyFilterButton.addEventListener('click', () => renderHistory(loadLocalEntries(), currentView === 'admin' && isAdminAuthenticated));
 }
@@ -1069,6 +1100,7 @@ if (rememberAdminDevice) {
   rememberAdminDevice.checked = loadTrustedDevice();
 }
 isAdminAuthenticated = loadTrustedDevice();
+setAdvancedConfigVisible(loadAdvancedConfigVisible());
 renderGrid(entries);
 updateAdminLoginState();
 renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
