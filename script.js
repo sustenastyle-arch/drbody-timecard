@@ -42,8 +42,10 @@ const toggleStaffManagementButton = document.getElementById('toggleStaffManageme
 const adminLoginButton = document.getElementById('adminLoginButton');
 const adminLogoutButton = document.getElementById('adminLogoutButton');
 const adminLoginHint = document.getElementById('adminLoginHint');
+const rememberAdminDevice = document.getElementById('rememberAdminDevice');
 const ADMIN_PASSWORD_KEY = 'drbody_timecard_admin_password';
 const FIXED_ADMIN_PASSWORD = 'drbodytimes2019';
+const ADMIN_TRUSTED_DEVICE_KEY = 'drbody_timecard_admin_trusted_device';
 let isAdminAuthenticated = false;
 const EMPLOYEES_KEY = 'drbody_timecard_employees';
 const LOCAL_ENTRIES_KEY = 'drbody_timecard_entries';
@@ -165,6 +167,18 @@ function enforceAdminPassword() {
   }
 }
 
+function loadTrustedDevice() {
+  return localStorage.getItem(ADMIN_TRUSTED_DEVICE_KEY) === '1';
+}
+
+function saveTrustedDevice(enabled) {
+  if (enabled) {
+    localStorage.setItem(ADMIN_TRUSTED_DEVICE_KEY, '1');
+  } else {
+    localStorage.removeItem(ADMIN_TRUSTED_DEVICE_KEY);
+  }
+}
+
 function verifyAdminPassword() {
   if (!isAdminAuthenticated) {
     alert('Please sign in as admin first.');
@@ -221,6 +235,7 @@ function handleAdminLogin() {
   const input = adminPasswordInput.value.trim();
   if (input === loadAdminPassword()) {
     isAdminAuthenticated = true;
+    saveTrustedDevice(rememberAdminDevice ? rememberAdminDevice.checked : true);
     updateAdminLoginState();
     renderHistory(loadLocalEntries(), currentView === 'admin' && isAdminAuthenticated);
     messageEl.textContent = 'Admin signed in.';
@@ -233,6 +248,7 @@ function handleAdminLogin() {
 
 function handleAdminLogout() {
   isAdminAuthenticated = false;
+  saveTrustedDevice(false);
   updateAdminLoginState();
   renderHistory(loadLocalEntries(), currentView === 'admin' && isAdminAuthenticated);
   messageEl.textContent = 'Admin signed out.';
@@ -1016,6 +1032,10 @@ if (DEFAULT_API_ROOT && !API_INPUT.value.trim()) {
 }
 const entries = loadLocalEntries();
 enforceAdminPassword();
+if (rememberAdminDevice) {
+  rememberAdminDevice.checked = loadTrustedDevice();
+}
+isAdminAuthenticated = loadTrustedDevice();
 renderGrid(entries);
 updateAdminLoginState();
 renderHistory(entries, currentView === 'admin' && isAdminAuthenticated);
