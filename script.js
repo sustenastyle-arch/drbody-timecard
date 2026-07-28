@@ -573,17 +573,27 @@ async function saveAllToBackend(entries, options = {}) {
     if (!silent) {
       setAdminSyncMessage('Saving all entries...');
     }
+
+    // Load backend first, then merge to avoid overwriting entries from other devices.
+    const getRes = await fetch(`${apiRoot}/get-timecard`);
+    if (!getRes.ok) {
+      throw new Error(`Load error: ${getRes.status}`);
+    }
+    const getResult = await getRes.json();
+    const backendEntries = Array.isArray(getResult) ? getResult : (getResult.entries || []);
+    const mergedEntries = mergeUniqueEntries(backendEntries, entries);
+
     const res = await fetch(`${apiRoot}/save-timecard`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'replace', entries })
+      body: JSON.stringify({ mode: 'replace', entries: mergedEntries })
     });
     if (!res.ok) {
       throw new Error(`Save error: ${res.status}`);
     }
     messageEl.textContent = 'All entries saved to backend.';
     if (!silent) {
-      setAdminSyncMessage('All entries saved.');
+      setAdminSyncMessage('All entries saved (merged).');
     }
   } catch (error) {
     console.error(error);
