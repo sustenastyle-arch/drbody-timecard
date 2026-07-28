@@ -74,6 +74,7 @@ const STATUS_LABELS = {
   [ACTION_CLOCK_IN]: 'Clocked In',
   [ACTION_CLOCK_OUT]: 'Clocked Out'
 };
+const BACKEND_SYNC_INTERVAL_MS = 20000;
 const STAFF_NAME_STYLES = {
   'Hiromi Tsunakawa': { bg: '#fb923c', fg: '#111827' },
   'Yuki Tanaka': { bg: '#dc2626', fg: '#ffffff' },
@@ -887,6 +888,22 @@ async function loadBackendEntries(options = {}) {
   }
 }
 
+let backendSyncTimer = null;
+
+function startBackendAutoSync() {
+  if (!isBackendAvailable()) return;
+  if (backendSyncTimer) return;
+
+  backendSyncTimer = setInterval(() => {
+    loadBackendEntries({ silent: true });
+  }, BACKEND_SYNC_INTERVAL_MS);
+}
+
+function syncNowSilent() {
+  if (!isBackendAvailable()) return;
+  loadBackendEntries({ silent: true });
+}
+
 loadBackendButton.addEventListener('click', loadBackendEntries);
 downloadCsvButton.addEventListener('click', () => {
   downloadSummaryCsv(loadLocalEntries(), exportFrom ? exportFrom.value : '', exportTo ? exportTo.value : '');
@@ -1008,8 +1025,17 @@ setView('staff');
 
 if (isBackendAvailable()) {
   loadBackendEntries({ silent: true });
+  startBackendAutoSync();
 }
 
 window.addEventListener('online', () => {
   flushPendingEntries({ silent: true });
+  syncNowSilent();
+});
+
+window.addEventListener('focus', syncNowSilent);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    syncNowSilent();
+  }
 });
