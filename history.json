@@ -21,5 +21,11 @@
     "employee": "Yuka Nishi",
     "action": "Clock Out",
     "timestamp": "2026-07-27T23:24:44.895Z"
+  },
+  {
+    "id": "d9d06f86-c133-4924-b8b8-ac6c0cad0ae5",
+    "employee": "Megumi Tezeni",
+    "action": "Clock Out",
+    "timestamp": "2026-07-27T23:24:45.639Z"
   }
 ]
