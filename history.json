@@ -129,5 +129,11 @@
     "employee": "Hiromi Tsunakawa",
     "action": "Clock Out",
     "timestamp": "2026-07-28T01:55:01.152Z"
+  },
+  {
+    "id": "eae8e22e-ea08-40c6-bafd-ddcd072e8118",
+    "employee": "Yuki Tanaka",
+    "action": "Clock Out",
+    "timestamp": "2026-07-28T01:55:02.077Z"
   }
 ]
