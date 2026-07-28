@@ -117,5 +117,11 @@
     "employee": "Aya Chong",
     "action": "Clock In",
     "timestamp": "2026-07-28T01:08:51.576Z"
+  },
+  {
+    "id": "849ad92a-00a1-45f2-b834-d3c6387f9d21",
+    "employee": "Mai Marquez",
+    "action": "Clock In",
+    "timestamp": "2026-07-28T01:08:52.296Z"
   }
 ]
