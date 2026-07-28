@@ -129,5 +129,11 @@
     "employee": "Megumi Tezeni",
     "action": "Clock In",
     "timestamp": "2026-07-28T01:08:46.873Z"
+  },
+  {
+    "id": "3cfdb9e0-eab0-4e6d-a00f-96e607592fd1",
+    "employee": "Mami Yamamoto",
+    "action": "Clock In",
+    "timestamp": "2026-07-28T01:08:48.759Z"
   }
 ]
